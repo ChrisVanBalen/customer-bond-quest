@@ -121,8 +121,12 @@ export default function Assets() {
                 const customer = customers.find(c => c.id === a.assignedTo);
                 return (
                   <tr key={a.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs font-medium text-foreground">{a.tag}</td>
-                    <td className="px-4 py-3 font-medium text-foreground">{a.name}</td>
+                    <td className="px-4 py-3 font-mono text-xs font-medium">
+                      <Link to={`/assets/${a.id}`} className="text-primary hover:underline">{a.tag}</Link>
+                    </td>
+                    <td className="px-4 py-3 font-medium">
+                      <Link to={`/assets/${a.id}`} className="text-foreground hover:text-primary transition-colors">{a.name}</Link>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{a.type}</td>
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden lg:table-cell">{a.serialNumber}</td>
                     <td className="px-4 py-3"><StatusBadge status={a.status} /></td>

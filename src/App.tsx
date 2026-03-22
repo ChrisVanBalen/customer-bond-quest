@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Assets from "./pages/Assets";
 import Tickets from "./pages/Tickets";
+import AssetDetail from "./pages/AssetDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/assets" element={<Assets />} />
+                  <Route path="/assets/:id" element={<AssetDetail />} />
                   <Route path="/tickets" element={<Tickets />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

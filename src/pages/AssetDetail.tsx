@@ -40,6 +40,7 @@ export default function AssetDetail() {
   }
 
   const currentCustomer = customers.find(c => c.id === asset.assignedTo);
+  const assetTickets = tickets.filter(t => t.assetId === asset.id);
   const history = [...asset.history].sort((a, b) => {
     const dateCmp = b.date.localeCompare(a.date);
     if (dateCmp !== 0) return dateCmp;

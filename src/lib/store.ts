@@ -283,10 +283,41 @@ export function useStore() {
     }));
   }, []);
 
+  const addTicketLog = useCallback((ticketId: string, entry: Omit<TicketLogEntry, "id" | "date">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        logs: [...t.logs, { ...entry, id: crypto.randomUUID(), date: new Date().toISOString() }],
+      } : t),
+    }));
+  }, []);
+
+  const addBillableItem = useCallback((ticketId: string, item: Omit<BillableItem, "id">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        billableItems: [...t.billableItems, { ...item, id: crypto.randomUUID() }],
+      } : t),
+    }));
+  }, []);
+
+  const addTimeEntry = useCallback((ticketId: string, entry: Omit<TimeEntry, "id">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        timeEntries: [...t.timeEntries, { ...entry, id: crypto.randomUUID() }],
+      } : t),
+    }));
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
+    addTicketLog, addBillableItem, addTimeEntry,
   };
 }

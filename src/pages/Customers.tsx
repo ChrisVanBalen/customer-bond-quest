@@ -86,7 +86,9 @@ export default function Customers() {
                 return (
                   <tr key={c.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-foreground">{c.name}</div>
+                      <div className="font-medium text-foreground">
+                        <Link to={`/customers/${c.id}`} className="hover:text-primary hover:underline transition-colors">{c.name}</Link>
+                      </div>
                       <div className="text-xs text-muted-foreground md:hidden">{c.email}</div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">

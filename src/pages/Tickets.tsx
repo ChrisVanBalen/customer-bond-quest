@@ -20,16 +20,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil } from "lucide-react";
+import { Plus, Search, Pencil, Package } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Tickets() {
-  const { tickets, customers, addTicket, updateTicket } = useStore();
+  const { tickets, customers, assets, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
-    title: "", description: "", customerId: "", priority: "medium" as TicketPriority, status: "open" as TicketStatus,
+    title: "", description: "", customerId: "", assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
   });
 
   const filtered = tickets.filter(t => {
@@ -38,15 +39,19 @@ export default function Tickets() {
     return matchSearch && matchStatus;
   });
 
+  const customerAssets = form.customerId
+    ? assets.filter(a => a.assignedTo === form.customerId && a.status === "assigned")
+    : [];
+
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", priority: "medium", status: "open" });
+    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", assetId: null, priority: "medium", status: "open" });
     setDialogOpen(true);
   };
 
   const openEdit = (t: Ticket) => {
     setEditing(t);
-    setForm({ title: t.title, description: t.description, customerId: t.customerId, priority: t.priority, status: t.status });
+    setForm({ title: t.title, description: t.description, customerId: t.customerId, assetId: t.assetId, priority: t.priority, status: t.status });
     setDialogOpen(true);
   };
 
@@ -94,6 +99,7 @@ export default function Tickets() {
               <tr className="border-b bg-muted/50">
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Title</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Customer</th>
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Asset</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Priority</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Status</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Updated</th>
@@ -103,6 +109,7 @@ export default function Tickets() {
             <tbody className="divide-y">
               {filtered.map(t => {
                 const customer = customers.find(c => c.id === t.customerId);
+                const asset = t.assetId ? assets.find(a => a.id === t.assetId) : null;
                 return (
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
@@ -110,6 +117,16 @@ export default function Tickets() {
                       <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1 md:hidden">{customer?.name}</div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{customer?.name ?? "Unknown"}</td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      {asset ? (
+                        <Link to={`/assets/${asset.id}`} className="inline-flex items-center gap-1.5 text-primary hover:underline">
+                          <Package className="h-3.5 w-3.5" />
+                          {asset.tag}
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3"><StatusBadge status={t.priority} /></td>
                     <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
                     <td className="px-4 py-3 text-muted-foreground tabular-nums hidden lg:table-cell">{t.updatedAt}</td>
@@ -122,7 +139,7 @@ export default function Tickets() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No tickets found</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No tickets found</td></tr>
               )}
             </tbody>
           </table>
@@ -141,13 +158,27 @@ export default function Tickets() {
             </div>
             <div className="grid gap-1.5">
               <Label>Customer</Label>
-              <Select value={form.customerId} onValueChange={v => setForm(f => ({ ...f, customerId: v }))}>
+              <Select value={form.customerId} onValueChange={v => setForm(f => ({ ...f, customerId: v, assetId: null }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select customer..." />
                 </SelectTrigger>
                 <SelectContent>
                   {customers.map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Related Asset</Label>
+              <Select value={form.assetId ?? "none"} onValueChange={v => setForm(f => ({ ...f, assetId: v === "none" ? null : v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select asset (optional)..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No asset</SelectItem>
+                  {customerAssets.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.tag} — {a.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

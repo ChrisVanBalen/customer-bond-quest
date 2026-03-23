@@ -268,11 +268,11 @@ export function useStore() {
     }));
   }, []);
 
-  const addTicket = useCallback((t: Omit<Ticket, "id" | "createdAt" | "updatedAt">) => {
+  const addTicket = useCallback((t: Omit<Ticket, "id" | "createdAt" | "updatedAt" | "logs" | "billableItems" | "timeEntries">) => {
     const now = new Date().toISOString().split("T")[0];
     setData(prev => ({
       ...prev,
-      tickets: [...prev.tickets, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now }],
+      tickets: [...prev.tickets, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now, logs: [], billableItems: [], timeEntries: [] }],
     }));
   }, []);
 

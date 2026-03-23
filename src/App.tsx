@@ -10,6 +10,7 @@ import Customers from "./pages/Customers";
 import Assets from "./pages/Assets";
 import Tickets from "./pages/Tickets";
 import AssetDetail from "./pages/AssetDetail";
+import CustomerDetail from "./pages/CustomerDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

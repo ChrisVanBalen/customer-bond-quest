@@ -1,0 +1,366 @@
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { useStore } from "@/lib/store";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  ArrowLeft,
+  Building2,
+  Mail,
+  Phone,
+  Package,
+  Plus,
+  MessageSquare,
+  DollarSign,
+  Clock,
+} from "lucide-react";
+
+export default function TicketDetail() {
+  const { id } = useParams<{ id: string }>();
+  const { tickets, customers, assets, addTicketLog, addBillableItem, addTimeEntry } = useStore();
+
+  const ticket = tickets.find(t => t.id === id);
+  const customer = ticket ? customers.find(c => c.id === ticket.customerId) : null;
+  const asset = ticket?.assetId ? assets.find(a => a.id === ticket.assetId) : null;
+
+  const [logDialog, setLogDialog] = useState(false);
+  const [billableDialog, setBillableDialog] = useState(false);
+  const [timeDialog, setTimeDialog] = useState(false);
+
+  const [logForm, setLogForm] = useState({ author: "", message: "" });
+  const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+  const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
+
+  if (!ticket) {
+    return (
+      <div className="animate-fade-in text-center py-20">
+        <p className="text-muted-foreground">Ticket not found.</p>
+        <Link to="/tickets" className="text-primary hover:underline mt-2 inline-block">Back to Tickets</Link>
+      </div>
+    );
+  }
+
+  const handleAddLog = () => {
+    if (!logForm.author.trim() || !logForm.message.trim()) return;
+    addTicketLog(ticket.id, logForm);
+    setLogForm({ author: "", message: "" });
+    setLogDialog(false);
+  };
+
+  const handleAddBillable = () => {
+    if (!billableForm.description.trim()) return;
+    addBillableItem(ticket.id, billableForm);
+    setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+    setBillableDialog(false);
+  };
+
+  const handleAddTime = () => {
+    if (!timeForm.technician.trim() || timeForm.hours <= 0) return;
+    addTimeEntry(ticket.id, timeForm);
+    setTimeForm({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
+    setTimeDialog(false);
+  };
+
+  const totalBillable = ticket.billableItems.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
+  const totalHours = ticket.timeEntries.reduce((sum, t) => sum + t.hours, 0);
+
+  return (
+    <div className="animate-fade-in">
+      <Link to="/tickets" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <ArrowLeft className="h-4 w-4" /> Back to Tickets
+      </Link>
+
+      <PageHeader title={ticket.title} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Ticket Info */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Ticket Details</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Status</p>
+                <div className="mt-1"><StatusBadge status={ticket.status} /></div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Priority</p>
+                <div className="mt-1"><StatusBadge status={ticket.priority} /></div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Created</p>
+                <p className="text-sm font-medium text-foreground mt-1">{ticket.createdAt}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Last Updated</p>
+                <p className="text-sm font-medium text-foreground mt-1">{ticket.updatedAt}</p>
+              </div>
+            </div>
+            {asset && (
+              <div className="mb-4">
+                <p className="text-xs text-muted-foreground">Related Asset</p>
+                <Link to={`/assets/${asset.id}`} className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline mt-1">
+                  <Package className="h-3.5 w-3.5" /> {asset.tag} — {asset.name}
+                </Link>
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Description</p>
+              <p className="text-sm text-foreground leading-relaxed">{ticket.description || "No description provided."}</p>
+            </div>
+          </div>
+
+          {/* Log Entries */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> Ticket Log
+              </h2>
+              <Button size="sm" variant="outline" onClick={() => setLogDialog(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Entry
+              </Button>
+            </div>
+            {ticket.logs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No log entries yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {ticket.logs.slice().reverse().map(log => (
+                  <div key={log.id} className="border-l-2 border-primary/30 pl-4 py-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{log.author}</span>
+                      <span>·</span>
+                      <span>{new Date(log.date).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-foreground mt-0.5">{log.message}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Billable Items */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <DollarSign className="h-4 w-4" /> Billable Items
+              </h2>
+              <Button size="sm" variant="outline" onClick={() => setBillableDialog(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Item
+              </Button>
+            </div>
+            {ticket.billableItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No billable items.</p>
+            ) : (
+              <>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left font-medium text-muted-foreground pb-2">Date</th>
+                      <th className="text-left font-medium text-muted-foreground pb-2">Description</th>
+                      <th className="text-right font-medium text-muted-foreground pb-2">Qty</th>
+                      <th className="text-right font-medium text-muted-foreground pb-2">Price</th>
+                      <th className="text-right font-medium text-muted-foreground pb-2">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {ticket.billableItems.map(item => (
+                      <tr key={item.id}>
+                        <td className="py-2 text-muted-foreground">{item.date}</td>
+                        <td className="py-2 text-foreground">{item.description}</td>
+                        <td className="py-2 text-right tabular-nums">{item.quantity}</td>
+                        <td className="py-2 text-right tabular-nums">${item.unitPrice.toFixed(2)}</td>
+                        <td className="py-2 text-right tabular-nums font-medium">${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="flex justify-end mt-3 pt-3 border-t">
+                  <p className="text-sm font-semibold text-foreground">Total: ${totalBillable.toFixed(2)}</p>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Time Entries */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Time Tracking
+              </h2>
+              <Button size="sm" variant="outline" onClick={() => setTimeDialog(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Log Time
+              </Button>
+            </div>
+            {ticket.timeEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No time entries.</p>
+            ) : (
+              <>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left font-medium text-muted-foreground pb-2">Date</th>
+                      <th className="text-left font-medium text-muted-foreground pb-2">Technician</th>
+                      <th className="text-right font-medium text-muted-foreground pb-2">Hours</th>
+                      <th className="text-left font-medium text-muted-foreground pb-2">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {ticket.timeEntries.map(entry => (
+                      <tr key={entry.id}>
+                        <td className="py-2 text-muted-foreground">{entry.date}</td>
+                        <td className="py-2 text-foreground">{entry.technician}</td>
+                        <td className="py-2 text-right tabular-nums">{entry.hours.toFixed(1)}</td>
+                        <td className="py-2 text-foreground">{entry.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="flex justify-end mt-3 pt-3 border-t">
+                  <p className="text-sm font-semibold text-foreground">Total: {totalHours.toFixed(1)} hrs</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar - Customer Info */}
+        <div className="space-y-6">
+          {customer && (
+            <div className="bg-card rounded-xl border shadow-sm p-6">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Customer</h2>
+              <Link to={`/customers/${customer.id}`} className="text-lg font-semibold text-primary hover:underline flex items-center gap-2">
+                <Building2 className="h-4 w-4" /> {customer.name}
+              </Link>
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="h-3.5 w-3.5" /> {customer.email}
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="h-3.5 w-3.5" /> {customer.phone}
+                </div>
+                {customer.address && (
+                  <p className="text-muted-foreground">{customer.address}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Summary Card */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Summary</h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Log Entries</span>
+                <span className="font-medium text-foreground">{ticket.logs.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Billable Items</span>
+                <span className="font-medium text-foreground">{ticket.billableItems.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Billable Total</span>
+                <span className="font-medium text-foreground">${totalBillable.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between border-t pt-3">
+                <span className="text-muted-foreground">Hours Logged</span>
+                <span className="font-medium text-foreground">{totalHours.toFixed(1)} hrs</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Log Dialog */}
+      <Dialog open={logDialog} onOpenChange={setLogDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Add Log Entry</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Author</Label>
+              <Input value={logForm.author} onChange={e => setLogForm(f => ({ ...f, author: e.target.value }))} placeholder="Your name" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Message</Label>
+              <Textarea value={logForm.message} onChange={e => setLogForm(f => ({ ...f, message: e.target.value }))} rows={3} placeholder="What happened..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLogDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddLog}>Add Entry</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Billable Dialog */}
+      <Dialog open={billableDialog} onOpenChange={setBillableDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Add Billable Item</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Date</Label>
+              <Input type="date" value={billableForm.date} onChange={e => setBillableForm(f => ({ ...f, date: e.target.value }))} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Description</Label>
+              <Input value={billableForm.description} onChange={e => setBillableForm(f => ({ ...f, description: e.target.value }))} placeholder="Item description" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Quantity</Label>
+                <Input type="number" min={1} value={billableForm.quantity} onChange={e => setBillableForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Unit Price ($)</Label>
+                <Input type="number" min={0} step={0.01} value={billableForm.unitPrice} onChange={e => setBillableForm(f => ({ ...f, unitPrice: Number(e.target.value) }))} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBillableDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddBillable}>Add Item</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Time Entry Dialog */}
+      <Dialog open={timeDialog} onOpenChange={setTimeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Log Time</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Date</Label>
+              <Input type="date" value={timeForm.date} onChange={e => setTimeForm(f => ({ ...f, date: e.target.value }))} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Technician</Label>
+              <Input value={timeForm.technician} onChange={e => setTimeForm(f => ({ ...f, technician: e.target.value }))} placeholder="Technician name" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Hours</Label>
+              <Input type="number" min={0.1} step={0.1} value={timeForm.hours} onChange={e => setTimeForm(f => ({ ...f, hours: Number(e.target.value) }))} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Description</Label>
+              <Textarea value={timeForm.description} onChange={e => setTimeForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Work performed" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTimeDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddTime}>Log Time</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

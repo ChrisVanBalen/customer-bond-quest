@@ -123,6 +123,11 @@ function loadData(): StoreData {
         ...a,
         history: a.history ?? [{ id: crypto.randomUUID(), date: a.createdAt, type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" }],
       }));
+      // Migrate tickets without assetId
+      parsed.tickets = parsed.tickets.map((t: any) => ({
+        ...t,
+        assetId: t.assetId ?? null,
+      }));
       return parsed;
     }
   } catch {}

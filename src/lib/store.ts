@@ -149,10 +149,13 @@ function loadData(): StoreData {
         ...a,
         history: a.history ?? [{ id: crypto.randomUUID(), date: a.createdAt, type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" }],
       }));
-      // Migrate tickets without assetId
+      // Migrate tickets
       parsed.tickets = parsed.tickets.map((t: any) => ({
         ...t,
         assetId: t.assetId ?? null,
+        logs: t.logs ?? [],
+        billableItems: t.billableItems ?? [],
+        timeEntries: t.timeEntries ?? [],
       }));
       return parsed;
     }

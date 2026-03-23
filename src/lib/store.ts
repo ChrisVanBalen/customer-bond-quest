@@ -42,6 +42,29 @@ export interface Asset {
 export type TicketPriority = "low" | "medium" | "high" | "critical";
 export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
+export interface TicketLogEntry {
+  id: string;
+  date: string;
+  author: string;
+  message: string;
+}
+
+export interface BillableItem {
+  id: string;
+  date: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface TimeEntry {
+  id: string;
+  date: string;
+  technician: string;
+  hours: number;
+  description: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -52,6 +75,9 @@ export interface Ticket {
   status: TicketStatus;
   createdAt: string;
   updatedAt: string;
+  logs: TicketLogEntry[];
+  billableItems: BillableItem[];
+  timeEntries: TimeEntry[];
 }
 
 interface StoreData {

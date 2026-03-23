@@ -47,6 +47,7 @@ export interface Ticket {
   title: string;
   description: string;
   customerId: string;
+  assetId: string | null;
   priority: TicketPriority;
   status: TicketStatus;
   createdAt: string;

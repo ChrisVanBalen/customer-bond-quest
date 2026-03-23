@@ -3,7 +3,7 @@ import { useStore } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, User, Calendar, Hash, FileText, CircleDot } from "lucide-react";
+import { ArrowLeft, Package, User, Calendar, Hash, FileText, CircleDot, Ticket } from "lucide-react";
 
 const eventIcons: Record<string, string> = {
   created: "bg-emerald-100 text-emerald-600",

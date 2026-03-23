@@ -23,7 +23,7 @@ const eventLabels: Record<string, string> = {
 
 export default function AssetDetail() {
   const { id } = useParams<{ id: string }>();
-  const { assets, customers } = useStore();
+  const { assets, customers, tickets } = useStore();
   const asset = assets.find(a => a.id === id);
 
   if (!asset) {

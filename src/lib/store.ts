@@ -42,6 +42,29 @@ export interface Asset {
 export type TicketPriority = "low" | "medium" | "high" | "critical";
 export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
 
+export interface TicketLogEntry {
+  id: string;
+  date: string;
+  author: string;
+  message: string;
+}
+
+export interface BillableItem {
+  id: string;
+  date: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface TimeEntry {
+  id: string;
+  date: string;
+  technician: string;
+  hours: number;
+  description: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -52,6 +75,9 @@ export interface Ticket {
   status: TicketStatus;
   createdAt: string;
   updatedAt: string;
+  logs: TicketLogEntry[];
+  billableItems: BillableItem[];
+  timeEntries: TimeEntry[];
 }
 
 interface StoreData {
@@ -107,9 +133,9 @@ const defaultData: StoreData = {
     },
   ],
   tickets: [
-    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", assetId: "a1", priority: "high", status: "in_progress", createdAt: "2025-03-20", updatedAt: "2025-03-21" },
-    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19" },
-    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18" },
+    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", assetId: "a1", priority: "high", status: "in_progress", createdAt: "2025-03-20", updatedAt: "2025-03-21", logs: [], billableItems: [], timeEntries: [] },
+    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19", logs: [], billableItems: [], timeEntries: [] },
+    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18", logs: [], billableItems: [], timeEntries: [] },
   ],
 };
 
@@ -123,10 +149,13 @@ function loadData(): StoreData {
         ...a,
         history: a.history ?? [{ id: crypto.randomUUID(), date: a.createdAt, type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" }],
       }));
-      // Migrate tickets without assetId
+      // Migrate tickets
       parsed.tickets = parsed.tickets.map((t: any) => ({
         ...t,
         assetId: t.assetId ?? null,
+        logs: t.logs ?? [],
+        billableItems: t.billableItems ?? [],
+        timeEntries: t.timeEntries ?? [],
       }));
       return parsed;
     }
@@ -239,11 +268,11 @@ export function useStore() {
     }));
   }, []);
 
-  const addTicket = useCallback((t: Omit<Ticket, "id" | "createdAt" | "updatedAt">) => {
+  const addTicket = useCallback((t: Omit<Ticket, "id" | "createdAt" | "updatedAt" | "logs" | "billableItems" | "timeEntries">) => {
     const now = new Date().toISOString().split("T")[0];
     setData(prev => ({
       ...prev,
-      tickets: [...prev.tickets, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now }],
+      tickets: [...prev.tickets, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now, logs: [], billableItems: [], timeEntries: [] }],
     }));
   }, []);
 
@@ -254,10 +283,41 @@ export function useStore() {
     }));
   }, []);
 
+  const addTicketLog = useCallback((ticketId: string, entry: Omit<TicketLogEntry, "id" | "date">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        logs: [...t.logs, { ...entry, id: crypto.randomUUID(), date: new Date().toISOString() }],
+      } : t),
+    }));
+  }, []);
+
+  const addBillableItem = useCallback((ticketId: string, item: Omit<BillableItem, "id">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        billableItems: [...t.billableItems, { ...item, id: crypto.randomUUID() }],
+      } : t),
+    }));
+  }, []);
+
+  const addTimeEntry = useCallback((ticketId: string, entry: Omit<TimeEntry, "id">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        timeEntries: [...t.timeEntries, { ...entry, id: crypto.randomUUID() }],
+      } : t),
+    }));
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
+    addTicketLog, addBillableItem, addTimeEntry,
   };
 }

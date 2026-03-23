@@ -113,7 +113,7 @@ export default function Tickets() {
                 return (
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-foreground">{t.title}</div>
+                      <Link to={`/tickets/${t.id}`} className="font-medium text-primary hover:underline">{t.title}</Link>
                       <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1 md:hidden">{customer?.name}</div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{customer?.name ?? "Unknown"}</td>

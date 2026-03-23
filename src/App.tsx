@@ -11,6 +11,7 @@ import Assets from "./pages/Assets";
 import Tickets from "./pages/Tickets";
 import AssetDetail from "./pages/AssetDetail";
 import CustomerDetail from "./pages/CustomerDetail";
+import TicketDetail from "./pages/TicketDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/assets" element={<Assets />} />
                   <Route path="/assets/:id" element={<AssetDetail />} />
+                  <Route path="/tickets/:id" element={<TicketDetail />} />
                   <Route path="/tickets" element={<Tickets />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

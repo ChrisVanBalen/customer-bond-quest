@@ -10,6 +10,7 @@ import Customers from "./pages/Customers";
 import Assets from "./pages/Assets";
 import Tickets from "./pages/Tickets";
 import AssetDetail from "./pages/AssetDetail";
+import CustomerDetail from "./pages/CustomerDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
               <main className="flex-1 p-6 lg:p-8 overflow-auto">
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/customers/:id" element={<CustomerDetail />} />
                   <Route path="/customers" element={<Customers />} />
                   <Route path="/assets" element={<Assets />} />
                   <Route path="/assets/:id" element={<AssetDetail />} />

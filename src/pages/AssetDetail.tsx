@@ -3,7 +3,7 @@ import { useStore } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, User, Calendar, Hash, FileText, CircleDot } from "lucide-react";
+import { ArrowLeft, Package, User, Calendar, Hash, FileText, CircleDot, Ticket } from "lucide-react";
 
 const eventIcons: Record<string, string> = {
   created: "bg-emerald-100 text-emerald-600",
@@ -23,7 +23,7 @@ const eventLabels: Record<string, string> = {
 
 export default function AssetDetail() {
   const { id } = useParams<{ id: string }>();
-  const { assets, customers } = useStore();
+  const { assets, customers, tickets } = useStore();
   const asset = assets.find(a => a.id === id);
 
   if (!asset) {
@@ -40,6 +40,7 @@ export default function AssetDetail() {
   }
 
   const currentCustomer = customers.find(c => c.id === asset.assignedTo);
+  const assetTickets = tickets.filter(t => t.assetId === asset.id);
   const history = [...asset.history].sort((a, b) => {
     const dateCmp = b.date.localeCompare(a.date);
     if (dateCmp !== 0) return dateCmp;
@@ -193,6 +194,52 @@ export default function AssetDetail() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Service Ticket History */}
+          <div className="bg-card rounded-xl border shadow-sm">
+            <div className="p-5 border-b flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-foreground">Service Tickets</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{assetTickets.length} tickets linked to this asset</p>
+              </div>
+              <Ticket className="h-5 w-5 text-muted-foreground" />
+            </div>
+            {assetTickets.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Title</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">Customer</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Priority</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Status</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {assetTickets.map(t => {
+                      const ticketCustomer = customers.find(c => c.id === t.customerId);
+                      return (
+                        <tr key={t.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-4 py-2.5 text-foreground font-medium">{t.title}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground hidden sm:table-cell">
+                            {ticketCustomer ? (
+                              <Link to={`/customers/${ticketCustomer.id}`} className="text-primary hover:underline">{ticketCustomer.name}</Link>
+                            ) : "Unknown"}
+                          </td>
+                          <td className="px-4 py-2.5"><StatusBadge status={t.priority} /></td>
+                          <td className="px-4 py-2.5"><StatusBadge status={t.status} /></td>
+                          <td className="px-4 py-2.5 text-muted-foreground tabular-nums hidden sm:table-cell">{t.createdAt}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-muted-foreground text-sm">No tickets linked to this asset</div>
+            )}
           </div>
         </div>
       </div>

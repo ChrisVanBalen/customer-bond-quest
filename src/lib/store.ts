@@ -373,11 +373,37 @@ export function useStore() {
     }));
   }, []);
 
+  const addAgreement = useCallback((a: Omit<ServiceAgreement, "id" | "number" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => {
+      const num = prev.agreements.length + 1;
+      return {
+        ...prev,
+        agreements: [...prev.agreements, { ...a, id: crypto.randomUUID(), number: `SA-${String(num).padStart(3, "0")}`, createdAt: now, updatedAt: now }],
+      };
+    });
+  }, []);
+
+  const updateAgreement = useCallback((id: string, updates: Partial<ServiceAgreement>) => {
+    setData(prev => ({
+      ...prev,
+      agreements: prev.agreements.map(a => a.id === id ? { ...a, ...updates, updatedAt: new Date().toISOString().split("T")[0] } : a),
+    }));
+  }, []);
+
+  const deleteAgreement = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      agreements: prev.agreements.filter(a => a.id !== id),
+    }));
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
     addTicketLog, addBillableItem, addTimeEntry,
+    addAgreement, updateAgreement, deleteAgreement,
   };
 }

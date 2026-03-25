@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, TicketCheck } from "lucide-react";
+import { LayoutDashboard, Users, Package, TicketCheck, FileSignature } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {

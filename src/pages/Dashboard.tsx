@@ -1,4 +1,4 @@
-import { Users, Package, TicketCheck, AlertTriangle } from "lucide-react";
+import { Users, Package, TicketCheck, AlertTriangle, FileSignature } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
@@ -6,12 +6,18 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
-  const { customers, assets, tickets } = useStore();
+  const { customers, assets, tickets, agreements } = useStore();
 
   const openTickets = tickets.filter(t => t.status === "open" || t.status === "in_progress");
   const assignedAssets = assets.filter(a => a.status === "assigned");
   const availableAssets = assets.filter(a => a.status === "available");
   const criticalTickets = tickets.filter(t => t.priority === "critical" || t.priority === "high");
+
+  const expiringAgreements = agreements.filter(a => {
+    if (a.stage !== "accepted" && a.stage !== "executed") return false;
+    const months = Math.round((new Date(a.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30));
+    return months >= 0 && months <= 6;
+  });
 
   const recentTickets = [...tickets].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
 
@@ -19,11 +25,12 @@ export default function Dashboard() {
     <div className="animate-fade-in">
       <PageHeader title="Dashboard" description="Overview of your operations" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <StatCard label="Customers" value={customers.length} icon={Users} trend={`${customers.length} active accounts`} />
         <StatCard label="Assigned Assets" value={assignedAssets.length} icon={Package} trend={`${availableAssets.length} available`} />
         <StatCard label="Open Tickets" value={openTickets.length} icon={TicketCheck} trend={`${tickets.length} total`} />
         <StatCard label="High Priority" value={criticalTickets.length} icon={AlertTriangle} trend="Needs attention" />
+        <StatCard label="Expiring Soon" value={expiringAgreements.length} icon={FileSignature} trend={`${agreements.length} agreements`} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

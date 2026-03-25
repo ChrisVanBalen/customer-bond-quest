@@ -80,10 +80,42 @@ export interface Ticket {
   timeEntries: TimeEntry[];
 }
 
+export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled";
+
+export interface AgreementServiceLine {
+  id: string;
+  description: string;
+  monthlyPrice: number;
+}
+
+export interface AgreementAssetLine {
+  id: string;
+  assetId: string;
+  monthlyPrice: number;
+  notes: string;
+}
+
+export interface ServiceAgreement {
+  id: string;
+  number: string;
+  customerId: string;
+  title: string;
+  stage: AgreementStage;
+  startDate: string;
+  endDate: string;
+  monthlyTotal: number;
+  services: AgreementServiceLine[];
+  assets: AgreementAssetLine[];
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface StoreData {
   customers: Customer[];
   assets: Asset[];
   tickets: Ticket[];
+  agreements: ServiceAgreement[];
 }
 
 const STORAGE_KEY = "crm-psa-data";
@@ -137,6 +169,32 @@ const defaultData: StoreData = {
     { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19", logs: [], billableItems: [], timeEntries: [] },
     { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18", logs: [], billableItems: [], timeEntries: [] },
   ],
+  agreements: [
+    {
+      id: "sa1", number: "SA-001", customerId: "c1", title: "Managed IT Services", stage: "executed",
+      startDate: "2024-12-01", endDate: "2025-11-30", monthlyTotal: 4500,
+      services: [
+        { id: "sl1", description: "24/7 Help Desk Support", monthlyPrice: 2000 },
+        { id: "sl2", description: "Network Monitoring & Management", monthlyPrice: 1500 },
+        { id: "sl3", description: "Endpoint Protection", monthlyPrice: 1000 },
+      ],
+      assets: [
+        { id: "al1", assetId: "a1", monthlyPrice: 0, notes: "Included in support scope" },
+        { id: "al2", assetId: "a2", monthlyPrice: 0, notes: "Included in support scope" },
+      ],
+      notes: "Annual renewal, auto-escalation clause 3%", createdAt: "2024-11-15", updatedAt: "2024-12-01",
+    },
+    {
+      id: "sa2", number: "SA-002", customerId: "c3", title: "Campus IT Support", stage: "quoting",
+      startDate: "2025-04-01", endDate: "2026-03-31", monthlyTotal: 3200,
+      services: [
+        { id: "sl4", description: "On-site Technician (2 days/week)", monthlyPrice: 2400 },
+        { id: "sl5", description: "Student Lab Management", monthlyPrice: 800 },
+      ],
+      assets: [],
+      notes: "Awaiting board approval", createdAt: "2025-03-10", updatedAt: "2025-03-15",
+    },
+  ],
 };
 
 function loadData(): StoreData {
@@ -157,6 +215,8 @@ function loadData(): StoreData {
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],
       }));
+      // Migrate agreements
+      parsed.agreements = parsed.agreements ?? [];
       return parsed;
     }
   } catch {}
@@ -313,11 +373,37 @@ export function useStore() {
     }));
   }, []);
 
+  const addAgreement = useCallback((a: Omit<ServiceAgreement, "id" | "number" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => {
+      const num = prev.agreements.length + 1;
+      return {
+        ...prev,
+        agreements: [...prev.agreements, { ...a, id: crypto.randomUUID(), number: `SA-${String(num).padStart(3, "0")}`, createdAt: now, updatedAt: now }],
+      };
+    });
+  }, []);
+
+  const updateAgreement = useCallback((id: string, updates: Partial<ServiceAgreement>) => {
+    setData(prev => ({
+      ...prev,
+      agreements: prev.agreements.map(a => a.id === id ? { ...a, ...updates, updatedAt: new Date().toISOString().split("T")[0] } : a),
+    }));
+  }, []);
+
+  const deleteAgreement = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      agreements: prev.agreements.filter(a => a.id !== id),
+    }));
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
     addTicketLog, addBillableItem, addTimeEntry,
+    addAgreement, updateAgreement, deleteAgreement,
   };
 }

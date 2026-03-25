@@ -1,4 +1,4 @@
-import { Users, Package, TicketCheck, AlertTriangle } from "lucide-react";
+import { Users, Package, TicketCheck, AlertTriangle, FileSignature } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";

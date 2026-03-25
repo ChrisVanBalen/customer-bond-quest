@@ -24,6 +24,7 @@ export default function CustomerDetail() {
 
   const customerAssets = assets.filter(a => a.assignedTo === customer.id);
   const customerTickets = tickets.filter(t => t.customerId === customer.id);
+  const customerAgreements = agreements.filter(a => a.customerId === customer.id);
 
   const encodedAddress = encodeURIComponent(customer.address);
 

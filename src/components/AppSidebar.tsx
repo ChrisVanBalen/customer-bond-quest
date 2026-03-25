@@ -17,6 +17,7 @@ const navItems = [
   { title: "Customers", url: "/customers", icon: Users },
   { title: "Assets", url: "/assets", icon: Package },
   { title: "Tickets", url: "/tickets", icon: TicketCheck },
+  { title: "Agreements", url: "/agreements", icon: FileSignature },
 ];
 
 export function AppSidebar() {

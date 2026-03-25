@@ -196,6 +196,47 @@ export default function CustomerDetail() {
               <div className="p-8 text-center text-muted-foreground text-sm">No tickets</div>
             )}
           </div>
+
+          {/* Service Agreements */}
+          <div className="bg-card rounded-xl border shadow-sm">
+            <div className="p-5 border-b flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-foreground">Service Agreements</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{customerAgreements.length} agreements</p>
+              </div>
+              <FileSignature className="h-5 w-5 text-muted-foreground" />
+            </div>
+            {customerAgreements.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Number</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Title</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Stage</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">Monthly</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">End Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {customerAgreements.map(a => (
+                      <tr key={a.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-2.5">
+                          <Link to={`/agreements/${a.id}`} className="font-mono text-primary hover:underline">{a.number}</Link>
+                        </td>
+                        <td className="px-4 py-2.5 text-foreground font-medium">{a.title}</td>
+                        <td className="px-4 py-2.5"><StatusBadge status={a.stage} /></td>
+                        <td className="px-4 py-2.5 text-foreground tabular-nums hidden sm:table-cell">${a.monthlyTotal.toLocaleString()}/mo</td>
+                        <td className="px-4 py-2.5 text-muted-foreground tabular-nums hidden sm:table-cell">{a.endDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-muted-foreground text-sm">No agreements</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

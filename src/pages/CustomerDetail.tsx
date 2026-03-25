@@ -6,7 +6,7 @@ import { ArrowLeft, Mail, Phone, MapPin, Building, FileText, Package, FileSignat
 
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
-  const { customers, assets, tickets } = useStore();
+  const { customers, assets, tickets, agreements } = useStore();
   const customer = customers.find(c => c.id === id);
 
   if (!customer) {

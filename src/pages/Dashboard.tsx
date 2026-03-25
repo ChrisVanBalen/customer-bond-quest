@@ -6,12 +6,18 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Link } from "react-router-dom";
 
 export default function Dashboard() {
-  const { customers, assets, tickets } = useStore();
+  const { customers, assets, tickets, agreements } = useStore();
 
   const openTickets = tickets.filter(t => t.status === "open" || t.status === "in_progress");
   const assignedAssets = assets.filter(a => a.status === "assigned");
   const availableAssets = assets.filter(a => a.status === "available");
   const criticalTickets = tickets.filter(t => t.priority === "critical" || t.priority === "high");
+
+  const expiringAgreements = agreements.filter(a => {
+    if (a.stage !== "accepted" && a.stage !== "executed") return false;
+    const months = Math.round((new Date(a.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 30));
+    return months >= 0 && months <= 6;
+  });
 
   const recentTickets = [...tickets].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, 5);
 

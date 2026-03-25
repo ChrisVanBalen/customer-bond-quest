@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useStore } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ArrowLeft, Mail, Phone, MapPin, Building, FileText, Package } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Building, FileText, Package, FileSignature } from "lucide-react";
 
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();

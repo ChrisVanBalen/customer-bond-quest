@@ -214,7 +214,8 @@ function loadData(): StoreData {
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],
-      }));
+      // Migrate agreements
+      parsed.agreements = parsed.agreements ?? [];
       return parsed;
     }
   } catch {}

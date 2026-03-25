@@ -12,10 +12,19 @@ const statusStyles: Record<string, string> = {
   medium: "bg-amber-50 text-amber-700 ring-amber-600/20",
   high: "bg-orange-50 text-orange-700 ring-orange-600/20",
   critical: "bg-red-50 text-red-700 ring-red-600/20",
+  draft: "bg-zinc-100 text-zinc-600 ring-zinc-500/20",
+  quoting: "bg-violet-50 text-violet-700 ring-violet-600/20",
+  sent: "bg-sky-50 text-sky-700 ring-sky-600/20",
+  accepted: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+  executed: "bg-blue-50 text-blue-700 ring-blue-600/20",
+  expired: "bg-red-50 text-red-700 ring-red-600/20",
+  cancelled: "bg-zinc-100 text-zinc-500 ring-zinc-500/20",
+  expiring_soon: "bg-amber-50 text-amber-700 ring-amber-600/20",
 };
 
 const labels: Record<string, string> = {
   in_progress: "In Progress",
+  expiring_soon: "Expiring Soon",
 };
 
 export function StatusBadge({ status }: { status: string }) {

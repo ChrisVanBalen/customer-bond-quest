@@ -80,10 +80,42 @@ export interface Ticket {
   timeEntries: TimeEntry[];
 }
 
+export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled";
+
+export interface AgreementServiceLine {
+  id: string;
+  description: string;
+  monthlyPrice: number;
+}
+
+export interface AgreementAssetLine {
+  id: string;
+  assetId: string;
+  monthlyPrice: number;
+  notes: string;
+}
+
+export interface ServiceAgreement {
+  id: string;
+  number: string;
+  customerId: string;
+  title: string;
+  stage: AgreementStage;
+  startDate: string;
+  endDate: string;
+  monthlyTotal: number;
+  services: AgreementServiceLine[];
+  assets: AgreementAssetLine[];
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface StoreData {
   customers: Customer[];
   assets: Asset[];
   tickets: Ticket[];
+  agreements: ServiceAgreement[];
 }
 
 const STORAGE_KEY = "crm-psa-data";

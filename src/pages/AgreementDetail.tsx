@@ -117,13 +117,13 @@ export default function AgreementDetail() {
       </div>
 
       {isExpiringSoon && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+        <div className="mb-6 border border-warning/30 bg-warning/5 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
           <div>
-            <p className="text-sm font-medium text-amber-800">
+            <p className="text-sm font-medium text-foreground">
               This agreement expires on {format(new Date(agreement.endDate), "MMMM d, yyyy")}
             </p>
-            <p className="text-xs text-amber-600 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {monthsUntilExpiry} month{monthsUntilExpiry !== 1 ? "s" : ""} remaining — begin renewal process
             </p>
           </div>

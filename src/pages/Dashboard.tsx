@@ -25,11 +25,12 @@ export default function Dashboard() {
     <div className="animate-fade-in">
       <PageHeader title="Dashboard" description="Overview of your operations" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <StatCard label="Customers" value={customers.length} icon={Users} trend={`${customers.length} active accounts`} />
         <StatCard label="Assigned Assets" value={assignedAssets.length} icon={Package} trend={`${availableAssets.length} available`} />
         <StatCard label="Open Tickets" value={openTickets.length} icon={TicketCheck} trend={`${tickets.length} total`} />
         <StatCard label="High Priority" value={criticalTickets.length} icon={AlertTriangle} trend="Needs attention" />
+        <StatCard label="Expiring Soon" value={expiringAgreements.length} icon={FileSignature} trend={`${agreements.length} agreements`} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

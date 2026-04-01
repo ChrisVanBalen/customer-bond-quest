@@ -20,6 +20,7 @@ import {
   Mail,
   Phone,
   Package,
+  MapPin,
   Plus,
   MessageSquare,
   DollarSign,
@@ -33,6 +34,9 @@ export default function TicketDetail() {
   const ticket = tickets.find(t => t.id === id);
   const customer = ticket ? customers.find(c => c.id === ticket.customerId) : null;
   const asset = ticket?.assetId ? assets.find(a => a.id === ticket.assetId) : null;
+  const ticketLocation = ticket?.locationId && customer
+    ? customer.locations?.find(l => l.id === ticket.locationId)
+    : customer?.locations?.find(l => l.isPrimary);
 
   const [logDialog, setLogDialog] = useState(false);
   const [billableDialog, setBillableDialog] = useState(false);
@@ -107,6 +111,16 @@ export default function TicketDetail() {
                 <p className="text-sm font-medium text-foreground mt-1">{ticket.updatedAt}</p>
               </div>
             </div>
+            {ticketLocation && (
+              <div className="mb-4">
+                <p className="text-xs text-muted-foreground">Location</p>
+                <p className="text-sm text-foreground mt-1 flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                  {ticketLocation.name} — {ticketLocation.address}
+                  {ticketLocation.isPrimary && <span className="text-[10px] text-primary font-semibold">(Primary)</span>}
+                </p>
+              </div>
+            )}
             {asset && (
               <div className="mb-4">
                 <p className="text-xs text-muted-foreground">Related Asset</p>

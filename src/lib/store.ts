@@ -1,13 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 
 // Types
+export interface CustomerLocation {
+  id: string;
+  name: string;
+  address: string;
+  isPrimary: boolean;
+}
+
 export interface Customer {
   id: string;
   name: string;
   email: string;
   phone: string;
   company: string;
-  address: string;
+  address: string; // kept for backward compat, mirrors primary location
+  locations: CustomerLocation[];
   notes: string;
   createdAt: string;
 }
@@ -70,6 +78,7 @@ export interface Ticket {
   title: string;
   description: string;
   customerId: string;
+  locationId: string | null;
   assetId: string | null;
   priority: TicketPriority;
   status: TicketStatus;
@@ -122,9 +131,33 @@ const STORAGE_KEY = "crm-psa-data";
 
 const defaultData: StoreData = {
   customers: [
-    { id: "c1", name: "Meridian Health Systems", email: "contact@meridianhs.com", phone: "(555) 234-5678", company: "Meridian Health Systems", address: "1200 Oak Valley Dr, Suite 300", notes: "Enterprise client, 3-year contract", createdAt: "2024-11-15" },
-    { id: "c2", name: "Cascade Engineering", email: "ops@cascadeeng.com", phone: "(555) 876-5432", company: "Cascade Engineering", address: "890 Industrial Pkwy", notes: "Manufacturing sector", createdAt: "2024-12-01" },
-    { id: "c3", name: "Pinebrook Academy", email: "it@pinebrookacad.edu", phone: "(555) 345-6789", company: "Pinebrook Academy", address: "456 Campus Blvd", notes: "Education sector, 150 endpoints", createdAt: "2025-01-10" },
+    {
+      id: "c1", name: "Meridian Health Systems", email: "contact@meridianhs.com", phone: "(555) 234-5678", company: "Meridian Health Systems",
+      address: "1200 Oak Valley Dr, Suite 300",
+      locations: [
+        { id: "loc1", name: "Headquarters", address: "1200 Oak Valley Dr, Suite 300", isPrimary: true },
+        { id: "loc2", name: "East Campus Clinic", address: "4500 Riverside Blvd, Building C", isPrimary: false },
+      ],
+      notes: "Enterprise client, 3-year contract", createdAt: "2024-11-15",
+    },
+    {
+      id: "c2", name: "Cascade Engineering", email: "ops@cascadeeng.com", phone: "(555) 876-5432", company: "Cascade Engineering",
+      address: "890 Industrial Pkwy",
+      locations: [
+        { id: "loc3", name: "Main Office", address: "890 Industrial Pkwy", isPrimary: true },
+      ],
+      notes: "Manufacturing sector", createdAt: "2024-12-01",
+    },
+    {
+      id: "c3", name: "Pinebrook Academy", email: "it@pinebrookacad.edu", phone: "(555) 345-6789", company: "Pinebrook Academy",
+      address: "456 Campus Blvd",
+      locations: [
+        { id: "loc4", name: "Main Campus", address: "456 Campus Blvd", isPrimary: true },
+        { id: "loc5", name: "Athletic Complex", address: "460 Campus Blvd, West Wing", isPrimary: false },
+        { id: "loc6", name: "Admin Building", address: "450 Campus Blvd, Suite 100", isPrimary: false },
+      ],
+      notes: "Education sector, 150 endpoints", createdAt: "2025-01-10",
+    },
   ],
   assets: [
     {
@@ -165,9 +198,9 @@ const defaultData: StoreData = {
     },
   ],
   tickets: [
-    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", assetId: "a1", priority: "high", status: "in_progress", createdAt: "2025-03-20", updatedAt: "2025-03-21", logs: [], billableItems: [], timeEntries: [] },
-    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19", logs: [], billableItems: [], timeEntries: [] },
-    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18", logs: [], billableItems: [], timeEntries: [] },
+    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", priority: "high", status: "in_progress", createdAt: "2025-03-20", updatedAt: "2025-03-21", logs: [], billableItems: [], timeEntries: [] },
+    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19", logs: [], billableItems: [], timeEntries: [] },
+    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18", logs: [], billableItems: [], timeEntries: [] },
   ],
   agreements: [
     {
@@ -211,12 +244,18 @@ function loadData(): StoreData {
       parsed.tickets = parsed.tickets.map((t: any) => ({
         ...t,
         assetId: t.assetId ?? null,
+        locationId: t.locationId ?? null,
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],
       }));
       // Migrate agreements
       parsed.agreements = parsed.agreements ?? [];
+      // Migrate customers to have locations
+      parsed.customers = parsed.customers.map((c: any) => ({
+        ...c,
+        locations: c.locations ?? (c.address ? [{ id: crypto.randomUUID(), name: "Primary", address: c.address, isPrimary: true }] : []),
+      }));
       return parsed;
     }
   } catch {}
@@ -234,17 +273,30 @@ export function useStore() {
     saveData(data);
   }, [data]);
 
-  const addCustomer = useCallback((c: Omit<Customer, "id" | "createdAt">) => {
+  const addCustomer = useCallback((c: Omit<Customer, "id" | "createdAt" | "locations"> & { locations?: CustomerLocation[] }) => {
+    const id = crypto.randomUUID();
+    const locations = c.locations && c.locations.length > 0
+      ? c.locations
+      : c.address ? [{ id: crypto.randomUUID(), name: "Primary", address: c.address, isPrimary: true }] : [];
     setData(prev => ({
       ...prev,
-      customers: [...prev.customers, { ...c, id: crypto.randomUUID(), createdAt: new Date().toISOString().split("T")[0] }],
+      customers: [...prev.customers, { ...c, id, locations, createdAt: new Date().toISOString().split("T")[0] }],
     }));
   }, []);
 
   const updateCustomer = useCallback((id: string, updates: Partial<Customer>) => {
     setData(prev => ({
       ...prev,
-      customers: prev.customers.map(c => c.id === id ? { ...c, ...updates } : c),
+      customers: prev.customers.map(c => {
+        if (c.id !== id) return c;
+        const updated = { ...c, ...updates };
+        // Keep address synced with primary location
+        if (updates.locations) {
+          const primary = updates.locations.find(l => l.isPrimary);
+          if (primary) updated.address = primary.address;
+        }
+        return updated;
+      }),
     }));
   }, []);
 
@@ -256,6 +308,53 @@ export function useStore() {
         ...a, assignedTo: null, status: "available" as AssetStatus,
         history: [...a.history, { id: crypto.randomUUID(), date: new Date().toISOString().split("T")[0], type: "unassigned" as DeploymentEventType, customerId: null, previousCustomerId: id, notes: "Customer deleted" }],
       } : a),
+    }));
+  }, []);
+
+  const addCustomerLocation = useCallback((customerId: string, location: Omit<CustomerLocation, "id">) => {
+    setData(prev => ({
+      ...prev,
+      customers: prev.customers.map(c => {
+        if (c.id !== customerId) return c;
+        const newLoc: CustomerLocation = { ...location, id: crypto.randomUUID() };
+        let locations = [...c.locations, newLoc];
+        if (newLoc.isPrimary) {
+          locations = locations.map(l => l.id === newLoc.id ? l : { ...l, isPrimary: false });
+        }
+        const primary = locations.find(l => l.isPrimary);
+        return { ...c, locations, address: primary?.address ?? c.address };
+      }),
+    }));
+  }, []);
+
+  const updateCustomerLocation = useCallback((customerId: string, locationId: string, updates: Partial<CustomerLocation>) => {
+    setData(prev => ({
+      ...prev,
+      customers: prev.customers.map(c => {
+        if (c.id !== customerId) return c;
+        let locations = c.locations.map(l => l.id === locationId ? { ...l, ...updates } : l);
+        if (updates.isPrimary) {
+          locations = locations.map(l => l.id === locationId ? l : { ...l, isPrimary: false });
+        }
+        const primary = locations.find(l => l.isPrimary);
+        return { ...c, locations, address: primary?.address ?? c.address };
+      }),
+    }));
+  }, []);
+
+  const deleteCustomerLocation = useCallback((customerId: string, locationId: string) => {
+    setData(prev => ({
+      ...prev,
+      customers: prev.customers.map(c => {
+        if (c.id !== customerId) return c;
+        const locations = c.locations.filter(l => l.id !== locationId);
+        // If we deleted the primary, make the first one primary
+        if (locations.length > 0 && !locations.some(l => l.isPrimary)) {
+          locations[0].isPrimary = true;
+        }
+        const primary = locations.find(l => l.isPrimary);
+        return { ...c, locations, address: primary?.address ?? "" };
+      }),
     }));
   }, []);
 
@@ -401,6 +500,7 @@ export function useStore() {
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
+    addCustomerLocation, updateCustomerLocation, deleteCustomerLocation,
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
     addTicketLog, addBillableItem, addTimeEntry,

@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Package } from "lucide-react";
+import { Plus, Search, Pencil, Package, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Tickets() {
@@ -30,7 +30,7 @@ export default function Tickets() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
-    title: "", description: "", customerId: "", assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
+    title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
   });
 
   const filtered = tickets.filter(t => {
@@ -39,19 +39,21 @@ export default function Tickets() {
     return matchSearch && matchStatus;
   });
 
+  const selectedCustomer = customers.find(c => c.id === form.customerId);
+  const customerLocations = selectedCustomer?.locations ?? [];
   const customerAssets = form.customerId
     ? assets.filter(a => a.assignedTo === form.customerId && a.status === "assigned")
     : [];
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", assetId: null, priority: "medium", status: "open" });
+    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, priority: "medium", status: "open" });
     setDialogOpen(true);
   };
 
   const openEdit = (t: Ticket) => {
     setEditing(t);
-    setForm({ title: t.title, description: t.description, customerId: t.customerId, assetId: t.assetId, priority: t.priority, status: t.status });
+    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, priority: t.priority, status: t.status });
     setDialogOpen(true);
   };
 
@@ -99,6 +101,7 @@ export default function Tickets() {
               <tr className="border-b bg-muted/50">
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Title</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Customer</th>
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden xl:table-cell">Location</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Asset</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Priority</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Status</th>
@@ -110,6 +113,9 @@ export default function Tickets() {
               {filtered.map(t => {
                 const customer = customers.find(c => c.id === t.customerId);
                 const asset = t.assetId ? assets.find(a => a.id === t.assetId) : null;
+                const location = t.locationId && customer
+                  ? customer.locations?.find(l => l.id === t.locationId)
+                  : customer?.locations?.find(l => l.isPrimary);
                 return (
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
@@ -117,6 +123,15 @@ export default function Tickets() {
                       <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1 md:hidden">{customer?.name}</div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{customer?.name ?? "Unknown"}</td>
+                    <td className="px-4 py-3 hidden xl:table-cell">
+                      {location ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3" /> {location.name}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       {asset ? (
                         <Link to={`/assets/${asset.id}`} className="inline-flex items-center gap-1.5 text-primary hover:underline">
@@ -139,7 +154,7 @@ export default function Tickets() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No tickets found</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No tickets found</td></tr>
               )}
             </tbody>
           </table>
@@ -158,7 +173,7 @@ export default function Tickets() {
             </div>
             <div className="grid gap-1.5">
               <Label>Customer</Label>
-              <Select value={form.customerId} onValueChange={v => setForm(f => ({ ...f, customerId: v, assetId: null }))}>
+              <Select value={form.customerId} onValueChange={v => setForm(f => ({ ...f, customerId: v, locationId: null, assetId: null }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select customer..." />
                 </SelectTrigger>
@@ -169,6 +184,22 @@ export default function Tickets() {
                 </SelectContent>
               </Select>
             </div>
+            {customerLocations.length > 0 && (
+              <div className="grid gap-1.5">
+                <Label>Location</Label>
+                <Select value={form.locationId ?? "primary"} onValueChange={v => setForm(f => ({ ...f, locationId: v === "primary" ? null : v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Primary location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="primary">Primary Location</SelectItem>
+                    {customerLocations.filter(l => !l.isPrimary).map(l => (
+                      <SelectItem key={l.id} value={l.id}>{l.name} — {l.address}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="grid gap-1.5">
               <Label>Related Asset</Label>
               <Select value={form.assetId ?? "none"} onValueChange={v => setForm(f => ({ ...f, assetId: v === "none" ? null : v }))}>

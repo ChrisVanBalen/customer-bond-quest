@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash2, Mail, Phone } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Mail, Phone, MapPin } from "lucide-react";
 
 export default function Customers() {
   const { customers, assets, tickets, addCustomer, updateCustomer, deleteCustomer } = useStore();
@@ -74,6 +74,7 @@ export default function Customers() {
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Name</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Contact</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Company</th>
+                <th className="text-center font-medium text-muted-foreground px-4 py-3 hidden xl:table-cell">Locations</th>
                 <th className="text-center font-medium text-muted-foreground px-4 py-3">Assets</th>
                 <th className="text-center font-medium text-muted-foreground px-4 py-3">Tickets</th>
                 <th className="text-right font-medium text-muted-foreground px-4 py-3">Actions</th>
@@ -100,6 +101,11 @@ export default function Customers() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{c.company}</td>
+                    <td className="px-4 py-3 text-center hidden xl:table-cell">
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <MapPin className="h-3 w-3" /> {c.locations?.length ?? 0}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-center tabular-nums">{assetCount}</td>
                     <td className="px-4 py-3 text-center tabular-nums">{ticketCount}</td>
                     <td className="px-4 py-3 text-right">
@@ -117,7 +123,7 @@ export default function Customers() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     No customers found
                   </td>
                 </tr>

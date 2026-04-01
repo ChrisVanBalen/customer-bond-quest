@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Trash2, Mail, Phone } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Mail, Phone, MapPin } from "lucide-react";
 
 export default function Customers() {
   const { customers, assets, tickets, addCustomer, updateCustomer, deleteCustomer } = useStore();

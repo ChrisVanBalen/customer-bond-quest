@@ -74,6 +74,7 @@ export default function Customers() {
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Name</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Contact</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Company</th>
+                <th className="text-center font-medium text-muted-foreground px-4 py-3 hidden xl:table-cell">Locations</th>
                 <th className="text-center font-medium text-muted-foreground px-4 py-3">Assets</th>
                 <th className="text-center font-medium text-muted-foreground px-4 py-3">Tickets</th>
                 <th className="text-right font-medium text-muted-foreground px-4 py-3">Actions</th>

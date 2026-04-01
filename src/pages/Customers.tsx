@@ -101,6 +101,11 @@ export default function Customers() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{c.company}</td>
+                    <td className="px-4 py-3 text-center hidden xl:table-cell">
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <MapPin className="h-3 w-3" /> {c.locations?.length ?? 0}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-center tabular-nums">{assetCount}</td>
                     <td className="px-4 py-3 text-center tabular-nums">{ticketCount}</td>
                     <td className="px-4 py-3 text-right">

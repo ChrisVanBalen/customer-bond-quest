@@ -33,6 +33,9 @@ export default function TicketDetail() {
   const ticket = tickets.find(t => t.id === id);
   const customer = ticket ? customers.find(c => c.id === ticket.customerId) : null;
   const asset = ticket?.assetId ? assets.find(a => a.id === ticket.assetId) : null;
+  const ticketLocation = ticket?.locationId && customer
+    ? customer.locations?.find(l => l.id === ticket.locationId)
+    : customer?.locations?.find(l => l.isPrimary);
 
   const [logDialog, setLogDialog] = useState(false);
   const [billableDialog, setBillableDialog] = useState(false);

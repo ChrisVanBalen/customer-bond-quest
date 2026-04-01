@@ -20,6 +20,7 @@ import {
   Mail,
   Phone,
   Package,
+  MapPin,
   Plus,
   MessageSquare,
   DollarSign,

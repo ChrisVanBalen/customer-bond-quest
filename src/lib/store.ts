@@ -177,7 +177,7 @@ const defaultData: StoreData = {
       ],
     },
     {
-      id: "a2", tag: "AST-002", name: "Cisco Meraki MR46", type: "Network", serialNumber: "MR46-Q9X832", status: "assigned", assignedTo: "c1", notes: "Main lobby AP", createdAt: "2024-11-20", decommissionedAt: null,
+      id: "a2", tag: "AST-002", name: "Cisco Meraki MR46", type: "Network", serialNumber: "MR46-Q9X832", status: "assigned", assignedTo: "c1", locationId: null, notes: "Main lobby AP", createdAt: "2024-11-20", decommissionedAt: null,
       history: [
         { id: "h3", date: "2024-11-20", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h4", date: "2024-12-01", type: "assigned", customerId: "c3", previousCustomerId: null, notes: "Initial deployment to Pinebrook" },

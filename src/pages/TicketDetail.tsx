@@ -41,10 +41,12 @@ export default function TicketDetail() {
   const [logDialog, setLogDialog] = useState(false);
   const [billableDialog, setBillableDialog] = useState(false);
   const [timeDialog, setTimeDialog] = useState(false);
+  const [taskDialog, setTaskDialog] = useState(false);
 
   const [logForm, setLogForm] = useState({ author: "", message: "" });
   const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
+  const [taskForm, setTaskForm] = useState({ name: "", time: 0 });
 
   if (!ticket) {
     return (

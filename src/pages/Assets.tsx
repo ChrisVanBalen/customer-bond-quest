@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, UserPlus, XCircle } from "lucide-react";
+import { Plus, Search, Pencil, UserPlus, XCircle, MapPin } from "lucide-react";
 
 export default function Assets() {
   const { assets, customers, addAsset, updateAsset, assignAsset, decommissionAsset } = useStore();
@@ -32,7 +32,8 @@ export default function Assets() {
   const [editing, setEditing] = useState<Asset | null>(null);
   const [assigningAsset, setAssigningAsset] = useState<Asset | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<string>("");
-  const [form, setForm] = useState({ tag: "", name: "", type: "", serialNumber: "", status: "available" as AssetStatus, assignedTo: null as string | null, notes: "" });
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [form, setForm] = useState({ tag: "", name: "", type: "", serialNumber: "", status: "available" as AssetStatus, assignedTo: null as string | null, locationId: null as string | null, notes: "" });
 
   const filtered = assets.filter(a => {
     const matchSearch = [a.tag, a.name, a.type, a.serialNumber].some(f => f.toLowerCase().includes(search.toLowerCase()));
@@ -43,19 +44,20 @@ export default function Assets() {
   const openNew = () => {
     setEditing(null);
     const nextNum = assets.length + 1;
-    setForm({ tag: `AST-${String(nextNum).padStart(3, "0")}`, name: "", type: "", serialNumber: "", status: "available", assignedTo: null, notes: "" });
+    setForm({ tag: `AST-${String(nextNum).padStart(3, "0")}`, name: "", type: "", serialNumber: "", status: "available", assignedTo: null, locationId: null, notes: "" });
     setDialogOpen(true);
   };
 
   const openEdit = (a: Asset) => {
     setEditing(a);
-    setForm({ tag: a.tag, name: a.name, type: a.type, serialNumber: a.serialNumber, status: a.status, assignedTo: a.assignedTo, notes: a.notes });
+    setForm({ tag: a.tag, name: a.name, type: a.type, serialNumber: a.serialNumber, status: a.status, assignedTo: a.assignedTo, locationId: a.locationId, notes: a.notes });
     setDialogOpen(true);
   };
 
   const openAssign = (a: Asset) => {
     setAssigningAsset(a);
     setSelectedCustomer(a.assignedTo ?? "");
+    setSelectedLocation(a.locationId ?? "");
     setAssignDialogOpen(true);
   };
 
@@ -69,11 +71,14 @@ export default function Assets() {
     setDialogOpen(false);
   };
 
-  const handleAssign = () => {
-    if (assigningAsset) {
-      assignAsset(assigningAsset.id, selectedCustomer || null);
-    }
-    setAssignDialogOpen(false);
+  const assignCustomerLocations = selectedCustomer && selectedCustomer !== "__unassign__"
+    ? customers.find(c => c.id === selectedCustomer)?.locations ?? []
+    : [];
+
+  const getLocationName = (asset: Asset) => {
+    if (!asset.assignedTo || !asset.locationId) return null;
+    const customer = customers.find(c => c.id === asset.assignedTo);
+    return customer?.locations.find(l => l.id === asset.locationId)?.name ?? null;
   };
 
   return (
@@ -113,12 +118,14 @@ export default function Assets() {
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Serial #</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Status</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Assigned To</th>
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Location</th>
                 <th className="text-right font-medium text-muted-foreground px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {filtered.map(a => {
                 const customer = customers.find(c => c.id === a.assignedTo);
+                const locationName = getLocationName(a);
                 return (
                   <tr key={a.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs font-medium">
@@ -131,6 +138,14 @@ export default function Assets() {
                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden lg:table-cell">{a.serialNumber}</td>
                     <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{customer?.name ?? "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                      {locationName ? (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {locationName}
+                        </span>
+                      ) : "—"}
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(a)} title="Edit">
@@ -152,7 +167,7 @@ export default function Assets() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No assets found</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No assets found</td></tr>
               )}
             </tbody>
           </table>
@@ -202,25 +217,45 @@ export default function Assets() {
           <DialogHeader>
             <DialogTitle>Assign Asset — {assigningAsset?.tag}</DialogTitle>
           </DialogHeader>
-          <div className="py-2">
-            <Label>Customer</Label>
-            <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Select a customer..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__unassign__">— Unassign —</SelectItem>
-                {customers.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="space-y-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Customer</Label>
+              <Select value={selectedCustomer} onValueChange={(v) => { setSelectedCustomer(v); setSelectedLocation(""); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a customer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unassign__">— Unassign —</SelectItem>
+                  {customers.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {assignCustomerLocations.length > 0 && (
+              <div className="grid gap-1.5">
+                <Label>Location</Label>
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a location..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assignCustomerLocations.map(l => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}{l.isPrimary ? " (Primary)" : ""} — {l.address}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>Cancel</Button>
             <Button onClick={() => {
               if (assigningAsset) {
-                assignAsset(assigningAsset.id, selectedCustomer === "__unassign__" ? null : selectedCustomer || null);
+                const custId = selectedCustomer === "__unassign__" ? null : selectedCustomer || null;
+                assignAsset(assigningAsset.id, custId, custId ? selectedLocation || null : null);
               }
               setAssignDialogOpen(false);
             }}>

@@ -149,7 +149,48 @@ export default function TicketDetail() {
             </div>
           </div>
 
-          {/* Log Entries */}
+          {/* Tasks */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <ListChecks className="h-4 w-4" /> Tasks
+              </h2>
+              <Button size="sm" variant="outline" onClick={() => setTaskDialog(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
+              </Button>
+            </div>
+            {ticket.tasks.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tasks yet.</p>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {ticket.tasks.map(task => (
+                    <div
+                      key={task.id}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => toggleTicketTask(ticket.id, task.id)}
+                    >
+                      {task.completed ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                      )}
+                      <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                        {task.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground tabular-nums">{task.time.toFixed(1)} hrs</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end mt-3 pt-3 border-t">
+                  <p className="text-sm font-semibold text-foreground">
+                    Completed: {completedTaskTime.toFixed(1)} / {totalTaskTime.toFixed(1)} hrs
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
           <div className="bg-card rounded-xl border shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">

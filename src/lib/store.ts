@@ -391,7 +391,7 @@ export function useStore() {
     }));
   }, []);
 
-  const assignAsset = useCallback((assetId: string, customerId: string | null) => {
+  const assignAsset = useCallback((assetId: string, customerId: string | null, locationId: string | null = null) => {
     const now = new Date().toISOString().split("T")[0];
     setData(prev => ({
       ...prev,
@@ -413,6 +413,7 @@ export function useStore() {
         return {
           ...a,
           assignedTo: customerId,
+          locationId: customerId ? locationId : null,
           status: customerId ? "assigned" as AssetStatus : "available" as AssetStatus,
           history: [...a.history, { id: crypto.randomUUID(), date: now, type: eventType, customerId, previousCustomerId, notes }],
         };

@@ -73,6 +73,13 @@ export interface TimeEntry {
   description: string;
 }
 
+export interface TicketTask {
+  id: string;
+  name: string;
+  time: number; // hours
+  completed: boolean;
+}
+
 export interface Ticket {
   id: string;
   title: string;

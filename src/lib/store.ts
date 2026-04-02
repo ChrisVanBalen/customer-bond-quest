@@ -471,6 +471,26 @@ export function useStore() {
     }));
   }, []);
 
+  const addTicketTask = useCallback((ticketId: string, task: Omit<TicketTask, "id">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        tasks: [...t.tasks, { ...task, id: crypto.randomUUID() }],
+      } : t),
+    }));
+  }, []);
+
+  const toggleTicketTask = useCallback((ticketId: string, taskId: string) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        tasks: t.tasks.map(tk => tk.id === taskId ? { ...tk, completed: !tk.completed } : tk),
+      } : t),
+    }));
+  }, []);
+
   const addTimeEntry = useCallback((ticketId: string, entry: Omit<TimeEntry, "id">) => {
     setData(prev => ({
       ...prev,

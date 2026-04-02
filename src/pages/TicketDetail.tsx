@@ -25,11 +25,14 @@ import {
   MessageSquare,
   DollarSign,
   Clock,
+  ListChecks,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 
 export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
-  const { tickets, customers, assets, addTicketLog, addBillableItem, addTimeEntry } = useStore();
+  const { tickets, customers, assets, addTicketLog, addBillableItem, addTimeEntry, addTicketTask, toggleTicketTask } = useStore();
 
   const ticket = tickets.find(t => t.id === id);
   const customer = ticket ? customers.find(c => c.id === ticket.customerId) : null;
@@ -41,10 +44,12 @@ export default function TicketDetail() {
   const [logDialog, setLogDialog] = useState(false);
   const [billableDialog, setBillableDialog] = useState(false);
   const [timeDialog, setTimeDialog] = useState(false);
+  const [taskDialog, setTaskDialog] = useState(false);
 
   const [logForm, setLogForm] = useState({ author: "", message: "" });
   const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
+  const [taskForm, setTaskForm] = useState({ name: "", time: 0 });
 
   if (!ticket) {
     return (
@@ -76,8 +81,17 @@ export default function TicketDetail() {
     setTimeDialog(false);
   };
 
+  const handleAddTask = () => {
+    if (!taskForm.name.trim() || taskForm.time <= 0) return;
+    addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, completed: false });
+    setTaskForm({ name: "", time: 0 });
+    setTaskDialog(false);
+  };
+
   const totalBillable = ticket.billableItems.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
   const totalHours = ticket.timeEntries.reduce((sum, t) => sum + t.hours, 0);
+  const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + t.time, 0);
+  const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
 
   return (
     <div className="animate-fade-in">
@@ -135,7 +149,48 @@ export default function TicketDetail() {
             </div>
           </div>
 
-          {/* Log Entries */}
+          {/* Tasks */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <ListChecks className="h-4 w-4" /> Tasks
+              </h2>
+              <Button size="sm" variant="outline" onClick={() => setTaskDialog(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
+              </Button>
+            </div>
+            {ticket.tasks.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tasks yet.</p>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {ticket.tasks.map(task => (
+                    <div
+                      key={task.id}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => toggleTicketTask(ticket.id, task.id)}
+                    >
+                      {task.completed ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                      )}
+                      <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                        {task.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground tabular-nums">{task.time.toFixed(1)} hrs</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-end mt-3 pt-3 border-t">
+                  <p className="text-sm font-semibold text-foreground">
+                    Completed: {completedTaskTime.toFixed(1)} / {totalTaskTime.toFixed(1)} hrs
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
           <div className="bg-card rounded-xl border shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -275,6 +330,14 @@ export default function TicketDetail() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Summary</h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
+                <span className="text-muted-foreground">Tasks</span>
+                <span className="font-medium text-foreground">{ticket.tasks.filter(t => t.completed).length}/{ticket.tasks.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Completed Task Time</span>
+                <span className="font-medium text-foreground">{completedTaskTime.toFixed(1)} hrs</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">Log Entries</span>
                 <span className="font-medium text-foreground">{ticket.logs.length}</span>
               </div>
@@ -372,6 +435,27 @@ export default function TicketDetail() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setTimeDialog(false)}>Cancel</Button>
             <Button onClick={handleAddTime}>Log Time</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Task Dialog */}
+      <Dialog open={taskDialog} onOpenChange={setTaskDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Add Task</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Task Name</Label>
+              <Input value={taskForm.name} onChange={e => setTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="Task description" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Estimated Time (hours)</Label>
+              <Input type="number" min={0.1} step={0.1} value={taskForm.time} onChange={e => setTaskForm(f => ({ ...f, time: Number(e.target.value) }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTaskDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddTask}>Add Task</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

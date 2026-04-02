@@ -73,6 +73,13 @@ export interface TimeEntry {
   description: string;
 }
 
+export interface TicketTask {
+  id: string;
+  name: string;
+  time: number; // hours
+  completed: boolean;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -84,6 +91,7 @@ export interface Ticket {
   status: TicketStatus;
   createdAt: string;
   updatedAt: string;
+  tasks: TicketTask[];
   logs: TicketLogEntry[];
   billableItems: BillableItem[];
   timeEntries: TimeEntry[];
@@ -198,9 +206,9 @@ const defaultData: StoreData = {
     },
   ],
   tickets: [
-    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", priority: "high", status: "in_progress", createdAt: "2025-03-20", updatedAt: "2025-03-21", logs: [], billableItems: [], timeEntries: [] },
-    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19", logs: [], billableItems: [], timeEntries: [] },
-    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18", logs: [], billableItems: [], timeEntries: [] },
+    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", priority: "high", status: "in_progress", createdAt: "2025-03-20", updatedAt: "2025-03-21", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18", tasks: [], logs: [], billableItems: [], timeEntries: [] },
   ],
   agreements: [
     {
@@ -245,6 +253,7 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
+        tasks: t.tasks ?? [],
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],
@@ -427,11 +436,11 @@ export function useStore() {
     }));
   }, []);
 
-  const addTicket = useCallback((t: Omit<Ticket, "id" | "createdAt" | "updatedAt" | "logs" | "billableItems" | "timeEntries">) => {
+  const addTicket = useCallback((t: Omit<Ticket, "id" | "createdAt" | "updatedAt" | "tasks" | "logs" | "billableItems" | "timeEntries">) => {
     const now = new Date().toISOString().split("T")[0];
     setData(prev => ({
       ...prev,
-      tickets: [...prev.tickets, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now, logs: [], billableItems: [], timeEntries: [] }],
+      tickets: [...prev.tickets, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now, tasks: [], logs: [], billableItems: [], timeEntries: [] }],
     }));
   }, []);
 
@@ -458,6 +467,26 @@ export function useStore() {
       tickets: prev.tickets.map(t => t.id === ticketId ? {
         ...t, updatedAt: new Date().toISOString().split("T")[0],
         billableItems: [...t.billableItems, { ...item, id: crypto.randomUUID() }],
+      } : t),
+    }));
+  }, []);
+
+  const addTicketTask = useCallback((ticketId: string, task: Omit<TicketTask, "id">) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        tasks: [...t.tasks, { ...task, id: crypto.randomUUID() }],
+      } : t),
+    }));
+  }, []);
+
+  const toggleTicketTask = useCallback((ticketId: string, taskId: string) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        tasks: t.tasks.map(tk => tk.id === taskId ? { ...tk, completed: !tk.completed } : tk),
       } : t),
     }));
   }, []);
@@ -504,6 +533,7 @@ export function useStore() {
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
     addTicketLog, addBillableItem, addTimeEntry,
+    addTicketTask, toggleTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
   };
 }

@@ -41,6 +41,7 @@ export interface Asset {
   serialNumber: string;
   status: AssetStatus;
   assignedTo: string | null;
+  locationId: string | null;
   notes: string;
   createdAt: string;
   decommissionedAt: string | null;

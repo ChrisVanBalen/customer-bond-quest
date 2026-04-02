@@ -253,6 +253,7 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
+        tasks: t.tasks ?? [],
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],

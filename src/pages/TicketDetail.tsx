@@ -81,8 +81,17 @@ export default function TicketDetail() {
     setTimeDialog(false);
   };
 
+  const handleAddTask = () => {
+    if (!taskForm.name.trim() || taskForm.time <= 0) return;
+    addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, completed: false });
+    setTaskForm({ name: "", time: 0 });
+    setTaskDialog(false);
+  };
+
   const totalBillable = ticket.billableItems.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
   const totalHours = ticket.timeEntries.reduce((sum, t) => sum + t.hours, 0);
+  const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + t.time, 0);
+  const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
 
   return (
     <div className="animate-fade-in">

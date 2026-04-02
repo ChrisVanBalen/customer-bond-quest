@@ -114,13 +114,26 @@ export default function AssetDetail() {
                   <dt className="text-xs text-muted-foreground">Currently Assigned To</dt>
                   <dd className="text-sm text-foreground">
                     {currentCustomer ? (
-                      <Link to="/customers" className="text-primary hover:underline">{currentCustomer.name}</Link>
+                      <Link to={`/customers/${currentCustomer.id}`} className="text-primary hover:underline">{currentCustomer.name}</Link>
                     ) : (
                       <span className="text-muted-foreground">Unassigned</span>
                     )}
                   </dd>
                 </div>
               </div>
+              {currentCustomer && asset.locationId && (() => {
+                const location = currentCustomer.locations.find(l => l.id === asset.locationId);
+                return location ? (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Location</dt>
+                      <dd className="text-sm text-foreground">{location.name}{location.isPrimary ? " (Primary)" : ""}</dd>
+                      <dd className="text-xs text-muted-foreground">{location.address}</dd>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
             </dl>
             {asset.notes && (
               <div className="mt-4 pt-4 border-t">

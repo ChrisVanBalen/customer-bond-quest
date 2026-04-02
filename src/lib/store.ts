@@ -191,7 +191,7 @@ const defaultData: StoreData = {
       ],
     },
     {
-      id: "a4", tag: "AST-004", name: "Lenovo ThinkPad T14", type: "Laptop", serialNumber: "LN-T14-PK6183", status: "assigned", assignedTo: "c2", notes: "Engineering team lead", createdAt: "2025-01-12", decommissionedAt: null,
+      id: "a4", tag: "AST-004", name: "Lenovo ThinkPad T14", type: "Laptop", serialNumber: "LN-T14-PK6183", status: "assigned", assignedTo: "c2", locationId: null, notes: "Engineering team lead", createdAt: "2025-01-12", decommissionedAt: null,
       history: [
         { id: "h7", date: "2025-01-12", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h8", date: "2025-01-14", type: "assigned", customerId: "c2", previousCustomerId: null, notes: "Issued to engineering team lead" },

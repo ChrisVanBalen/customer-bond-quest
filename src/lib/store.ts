@@ -91,6 +91,7 @@ export interface Ticket {
   status: TicketStatus;
   createdAt: string;
   updatedAt: string;
+  tasks: TicketTask[];
   logs: TicketLogEntry[];
   billableItems: BillableItem[];
   timeEntries: TimeEntry[];

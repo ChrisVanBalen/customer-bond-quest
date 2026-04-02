@@ -198,7 +198,7 @@ const defaultData: StoreData = {
       ],
     },
     {
-      id: "a5", tag: "AST-005", name: "APC UPS 1500VA", type: "Power", serialNumber: "APC-1500-ZM4920", status: "decommissioned", assignedTo: null, notes: "Battery failure, replaced", createdAt: "2024-06-15", decommissionedAt: "2025-02-01",
+      id: "a5", tag: "AST-005", name: "APC UPS 1500VA", type: "Power", serialNumber: "APC-1500-ZM4920", status: "decommissioned", assignedTo: null, locationId: null, notes: "Battery failure, replaced", createdAt: "2024-06-15", decommissionedAt: "2025-02-01",
       history: [
         { id: "h9", date: "2024-06-15", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h10", date: "2024-06-20", type: "assigned", customerId: "c1", previousCustomerId: null, notes: "Installed in server room" },

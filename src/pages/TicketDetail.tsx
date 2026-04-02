@@ -25,6 +25,9 @@ import {
   MessageSquare,
   DollarSign,
   Clock,
+  ListChecks,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 
 export default function TicketDetail() {

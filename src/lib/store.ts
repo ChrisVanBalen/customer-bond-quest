@@ -185,7 +185,7 @@ const defaultData: StoreData = {
       ],
     },
     {
-      id: "a3", tag: "AST-003", name: "HP LaserJet Pro M404", type: "Printer", serialNumber: "HP-M404-TN7291", status: "available", assignedTo: null, notes: "Spare inventory", createdAt: "2025-01-05", decommissionedAt: null,
+      id: "a3", tag: "AST-003", name: "HP LaserJet Pro M404", type: "Printer", serialNumber: "HP-M404-TN7291", status: "available", assignedTo: null, locationId: null, notes: "Spare inventory", createdAt: "2025-01-05", decommissionedAt: null,
       history: [
         { id: "h6", date: "2025-01-05", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
       ],

@@ -170,7 +170,7 @@ const defaultData: StoreData = {
   ],
   assets: [
     {
-      id: "a1", tag: "AST-001", name: "Dell OptiPlex 7090", type: "Desktop", serialNumber: "DL-7090-XK4521", status: "assigned", assignedTo: "c1", notes: "Front desk workstation", createdAt: "2024-11-20", decommissionedAt: null,
+      id: "a1", tag: "AST-001", name: "Dell OptiPlex 7090", type: "Desktop", serialNumber: "DL-7090-XK4521", status: "assigned", assignedTo: "c1", locationId: null, notes: "Front desk workstation", createdAt: "2024-11-20", decommissionedAt: null,
       history: [
         { id: "h1", date: "2024-11-20", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h2", date: "2024-11-22", type: "assigned", customerId: "c1", previousCustomerId: null, notes: "Deployed to front desk" },

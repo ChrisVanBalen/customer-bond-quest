@@ -244,9 +244,10 @@ function loadData(): StoreData {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Migrate assets without history
+      // Migrate assets without history or locationId
       parsed.assets = parsed.assets.map((a: any) => ({
         ...a,
+        locationId: a.locationId ?? null,
         history: a.history ?? [{ id: crypto.randomUUID(), date: a.createdAt, type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" }],
       }));
       // Migrate tickets

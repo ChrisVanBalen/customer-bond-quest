@@ -41,6 +41,7 @@ export interface Asset {
   serialNumber: string;
   status: AssetStatus;
   assignedTo: string | null;
+  locationId: string | null;
   notes: string;
   createdAt: string;
   decommissionedAt: string | null;
@@ -169,14 +170,14 @@ const defaultData: StoreData = {
   ],
   assets: [
     {
-      id: "a1", tag: "AST-001", name: "Dell OptiPlex 7090", type: "Desktop", serialNumber: "DL-7090-XK4521", status: "assigned", assignedTo: "c1", notes: "Front desk workstation", createdAt: "2024-11-20", decommissionedAt: null,
+      id: "a1", tag: "AST-001", name: "Dell OptiPlex 7090", type: "Desktop", serialNumber: "DL-7090-XK4521", status: "assigned", assignedTo: "c1", locationId: null, notes: "Front desk workstation", createdAt: "2024-11-20", decommissionedAt: null,
       history: [
         { id: "h1", date: "2024-11-20", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h2", date: "2024-11-22", type: "assigned", customerId: "c1", previousCustomerId: null, notes: "Deployed to front desk" },
       ],
     },
     {
-      id: "a2", tag: "AST-002", name: "Cisco Meraki MR46", type: "Network", serialNumber: "MR46-Q9X832", status: "assigned", assignedTo: "c1", notes: "Main lobby AP", createdAt: "2024-11-20", decommissionedAt: null,
+      id: "a2", tag: "AST-002", name: "Cisco Meraki MR46", type: "Network", serialNumber: "MR46-Q9X832", status: "assigned", assignedTo: "c1", locationId: null, notes: "Main lobby AP", createdAt: "2024-11-20", decommissionedAt: null,
       history: [
         { id: "h3", date: "2024-11-20", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h4", date: "2024-12-01", type: "assigned", customerId: "c3", previousCustomerId: null, notes: "Initial deployment to Pinebrook" },
@@ -184,20 +185,20 @@ const defaultData: StoreData = {
       ],
     },
     {
-      id: "a3", tag: "AST-003", name: "HP LaserJet Pro M404", type: "Printer", serialNumber: "HP-M404-TN7291", status: "available", assignedTo: null, notes: "Spare inventory", createdAt: "2025-01-05", decommissionedAt: null,
+      id: "a3", tag: "AST-003", name: "HP LaserJet Pro M404", type: "Printer", serialNumber: "HP-M404-TN7291", status: "available", assignedTo: null, locationId: null, notes: "Spare inventory", createdAt: "2025-01-05", decommissionedAt: null,
       history: [
         { id: "h6", date: "2025-01-05", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
       ],
     },
     {
-      id: "a4", tag: "AST-004", name: "Lenovo ThinkPad T14", type: "Laptop", serialNumber: "LN-T14-PK6183", status: "assigned", assignedTo: "c2", notes: "Engineering team lead", createdAt: "2025-01-12", decommissionedAt: null,
+      id: "a4", tag: "AST-004", name: "Lenovo ThinkPad T14", type: "Laptop", serialNumber: "LN-T14-PK6183", status: "assigned", assignedTo: "c2", locationId: null, notes: "Engineering team lead", createdAt: "2025-01-12", decommissionedAt: null,
       history: [
         { id: "h7", date: "2025-01-12", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h8", date: "2025-01-14", type: "assigned", customerId: "c2", previousCustomerId: null, notes: "Issued to engineering team lead" },
       ],
     },
     {
-      id: "a5", tag: "AST-005", name: "APC UPS 1500VA", type: "Power", serialNumber: "APC-1500-ZM4920", status: "decommissioned", assignedTo: null, notes: "Battery failure, replaced", createdAt: "2024-06-15", decommissionedAt: "2025-02-01",
+      id: "a5", tag: "AST-005", name: "APC UPS 1500VA", type: "Power", serialNumber: "APC-1500-ZM4920", status: "decommissioned", assignedTo: null, locationId: null, notes: "Battery failure, replaced", createdAt: "2024-06-15", decommissionedAt: "2025-02-01",
       history: [
         { id: "h9", date: "2024-06-15", type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" },
         { id: "h10", date: "2024-06-20", type: "assigned", customerId: "c1", previousCustomerId: null, notes: "Installed in server room" },
@@ -243,9 +244,10 @@ function loadData(): StoreData {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Migrate assets without history
+      // Migrate assets without history or locationId
       parsed.assets = parsed.assets.map((a: any) => ({
         ...a,
+        locationId: a.locationId ?? null,
         history: a.history ?? [{ id: crypto.randomUUID(), date: a.createdAt, type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" }],
       }));
       // Migrate tickets
@@ -389,7 +391,7 @@ export function useStore() {
     }));
   }, []);
 
-  const assignAsset = useCallback((assetId: string, customerId: string | null) => {
+  const assignAsset = useCallback((assetId: string, customerId: string | null, locationId: string | null = null) => {
     const now = new Date().toISOString().split("T")[0];
     setData(prev => ({
       ...prev,
@@ -411,6 +413,7 @@ export function useStore() {
         return {
           ...a,
           assignedTo: customerId,
+          locationId: customerId ? locationId : null,
           status: customerId ? "assigned" as AssetStatus : "available" as AssetStatus,
           history: [...a.history, { id: crypto.randomUUID(), date: now, type: eventType, customerId, previousCustomerId, notes }],
         };

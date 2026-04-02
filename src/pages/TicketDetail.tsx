@@ -438,6 +438,27 @@ export default function TicketDetail() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Task Dialog */}
+      <Dialog open={taskDialog} onOpenChange={setTaskDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Add Task</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Task Name</Label>
+              <Input value={taskForm.name} onChange={e => setTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="Task description" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Estimated Time (hours)</Label>
+              <Input type="number" min={0.1} step={0.1} value={taskForm.time} onChange={e => setTaskForm(f => ({ ...f, time: Number(e.target.value) }))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTaskDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddTask}>Add Task</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

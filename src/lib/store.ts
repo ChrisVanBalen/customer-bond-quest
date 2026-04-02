@@ -513,6 +513,7 @@ export function useStore() {
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
     addTicketLog, addBillableItem, addTimeEntry,
+    addTicketTask, toggleTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
   };
 }

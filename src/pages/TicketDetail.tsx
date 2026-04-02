@@ -330,6 +330,14 @@ export default function TicketDetail() {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Summary</h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
+                <span className="text-muted-foreground">Tasks</span>
+                <span className="font-medium text-foreground">{ticket.tasks.filter(t => t.completed).length}/{ticket.tasks.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Completed Task Time</span>
+                <span className="font-medium text-foreground">{completedTaskTime.toFixed(1)} hrs</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">Log Entries</span>
                 <span className="font-medium text-foreground">{ticket.logs.length}</span>
               </div>

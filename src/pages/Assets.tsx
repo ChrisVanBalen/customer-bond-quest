@@ -152,7 +152,18 @@ export default function Assets() {
       <PageHeader
         title="Asset Inventory"
         description={`${assets.length} tracked assets`}
-        action={<Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />Add Asset</Button>}
+        action={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleCsvExport}><Download className="h-4 w-4 mr-1.5" />Export</Button>
+            <Button variant="outline" asChild>
+              <label className="cursor-pointer">
+                <Upload className="h-4 w-4 mr-1.5" />Import CSV
+                <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} />
+              </label>
+            </Button>
+            <Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />Add Asset</Button>
+          </div>
+        }
       />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">

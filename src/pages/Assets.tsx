@@ -21,10 +21,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, UserPlus, XCircle, MapPin } from "lucide-react";
+import { Plus, Search, Pencil, UserPlus, XCircle, MapPin, Upload, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Assets() {
   const { assets, customers, addAsset, updateAsset, assignAsset, decommissionAsset } = useStore();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,6 +36,70 @@ export default function Assets() {
   const [selectedCustomer, setSelectedCustomer] = useState<string>("");
   const [selectedLocation, setSelectedLocation] = useState<string>("");
   const [form, setForm] = useState({ tag: "", name: "", type: "", serialNumber: "", status: "available" as AssetStatus, assignedTo: null as string | null, locationId: null as string | null, notes: "" });
+
+  const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) {
+        toast({ title: "Import failed", description: "CSV must have a header row and at least one data row.", variant: "destructive" });
+        return;
+      }
+      const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/[^a-z0-9]/g, ""));
+      const nameIdx = headers.findIndex(h => h === "name");
+      const tagIdx = headers.findIndex(h => h === "tag" || h === "assettag");
+      const typeIdx = headers.findIndex(h => h === "type");
+      const serialIdx = headers.findIndex(h => h === "serialnumber" || h === "serial");
+      const notesIdx = headers.findIndex(h => h === "notes");
+
+      if (nameIdx === -1) {
+        toast({ title: "Import failed", description: "CSV must have a 'Name' column.", variant: "destructive" });
+        return;
+      }
+
+      let imported = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",").map(c => c.trim());
+        const name = cols[nameIdx] || "";
+        if (!name) continue;
+        const nextNum = assets.length + imported + 1;
+        addAsset({
+          tag: (tagIdx >= 0 && cols[tagIdx]) || `AST-${String(nextNum).padStart(3, "0")}`,
+          name,
+          type: (typeIdx >= 0 && cols[typeIdx]) || "",
+          serialNumber: (serialIdx >= 0 && cols[serialIdx]) || "",
+          status: "available",
+          assignedTo: null,
+          locationId: null,
+          notes: (notesIdx >= 0 && cols[notesIdx]) || "",
+        });
+        imported++;
+      }
+      toast({ title: "Import complete", description: `${imported} asset${imported !== 1 ? "s" : ""} imported successfully.` });
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const handleCsvExport = () => {
+    const headers = ["Tag", "Name", "Type", "Serial Number", "Status", "Assigned To", "Location", "Notes"];
+    const rows = filtered.map(a => {
+      const customer = customers.find(c => c.id === a.assignedTo);
+      const loc = customer?.locations.find(l => l.id === a.locationId);
+      return [a.tag, a.name, a.type, a.serialNumber, a.status, customer?.name ?? "", loc?.name ?? "", a.notes].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    });
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "assets.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const filtered = assets.filter(a => {
     const matchSearch = [a.tag, a.name, a.type, a.serialNumber].some(f => f.toLowerCase().includes(search.toLowerCase()));
@@ -86,7 +152,18 @@ export default function Assets() {
       <PageHeader
         title="Asset Inventory"
         description={`${assets.length} tracked assets`}
-        action={<Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />Add Asset</Button>}
+        action={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleCsvExport}><Download className="h-4 w-4 mr-1.5" />Export</Button>
+            <Button variant="outline" asChild>
+              <label className="cursor-pointer">
+                <Upload className="h-4 w-4 mr-1.5" />Import CSV
+                <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} />
+              </label>
+            </Button>
+            <Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />Add Asset</Button>
+          </div>
+        }
       />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">

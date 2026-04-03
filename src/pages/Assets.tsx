@@ -36,7 +36,7 @@ export default function Assets() {
   const { assets, customers, addAsset, updateAsset, assignAsset, decommissionAsset } = useStore();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<AssetStatus[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);

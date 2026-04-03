@@ -35,16 +35,22 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
 export default function Tickets() {
   const { tickets, customers, assets, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
   });
 
+  const toggleStatusFilter = (status: TicketStatus) => {
+    setStatusFilter(prev =>
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
   const filtered = tickets.filter(t => {
     const matchSearch = [t.title, t.description].some(f => f.toLowerCase().includes(search.toLowerCase()));
-    const matchStatus = statusFilter === "all" || t.status === statusFilter;
+    const matchStatus = statusFilter.length === 0 || statusFilter.includes(t.status);
     return matchSearch && matchStatus;
   });
 

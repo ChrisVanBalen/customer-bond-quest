@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -20,22 +22,35 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Package, MapPin } from "lucide-react";
+import { Plus, Search, Pencil, Package, MapPin, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
+];
 
 export default function Tickets() {
   const { tickets, customers, assets, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
   });
 
+  const toggleStatusFilter = (status: TicketStatus) => {
+    setStatusFilter(prev =>
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
   const filtered = tickets.filter(t => {
     const matchSearch = [t.title, t.description].some(f => f.toLowerCase().includes(search.toLowerCase()));
-    const matchStatus = statusFilter === "all" || t.status === statusFilter;
+    const matchStatus = statusFilter.length === 0 || statusFilter.includes(t.status);
     return matchSearch && matchStatus;
   });
 
@@ -80,18 +95,42 @@ export default function Tickets() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[200px] justify-between">
+              {statusFilter.length === 0
+                ? "All Status"
+                : statusFilter.length === 1
+                  ? STATUS_OPTIONS.find(o => o.value === statusFilter[0])?.label
+                  : `${statusFilter.length} statuses`}
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-2" align="start">
+            {STATUS_OPTIONS.map(opt => (
+              <label
+                key={opt.value}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
+              >
+                <Checkbox
+                  checked={statusFilter.includes(opt.value)}
+                  onCheckedChange={() => toggleStatusFilter(opt.value)}
+                />
+                {opt.label}
+              </label>
+            ))}
+            {statusFilter.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-1 text-xs"
+                onClick={() => setStatusFilter([])}
+              >
+                Clear filters
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">

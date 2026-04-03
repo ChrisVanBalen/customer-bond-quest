@@ -95,18 +95,42 @@ export default function Tickets() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[200px] justify-between">
+              {statusFilter.length === 0
+                ? "All Status"
+                : statusFilter.length === 1
+                  ? STATUS_OPTIONS.find(o => o.value === statusFilter[0])?.label
+                  : `${statusFilter.length} statuses`}
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-2" align="start">
+            {STATUS_OPTIONS.map(opt => (
+              <label
+                key={opt.value}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
+              >
+                <Checkbox
+                  checked={statusFilter.includes(opt.value)}
+                  onCheckedChange={() => toggleStatusFilter(opt.value)}
+                />
+                {opt.label}
+              </label>
+            ))}
+            {statusFilter.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-1 text-xs"
+                onClick={() => setStatusFilter([])}
+              >
+                Clear filters
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">

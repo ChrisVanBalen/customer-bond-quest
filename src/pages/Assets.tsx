@@ -23,7 +23,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, UserPlus, XCircle, MapPin, Upload, Download } from "lucide-react";
+import { Plus, Search, Pencil, UserPlus, XCircle, MapPin, Upload, Download, ChevronDown } from "lucide-react";
+
+const STATUS_OPTIONS: { value: AssetStatus; label: string }[] = [
+  { value: "available", label: "Available" },
+  { value: "assigned", label: "Assigned" },
+  { value: "decommissioned", label: "Decommissioned" },
+];
 import { useToast } from "@/hooks/use-toast";
 
 export default function Assets() {

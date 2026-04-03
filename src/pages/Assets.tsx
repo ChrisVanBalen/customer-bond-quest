@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore, Asset, AssetStatus } from "@/lib/store";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -21,14 +23,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, UserPlus, XCircle, MapPin, Upload, Download } from "lucide-react";
+import { Plus, Search, Pencil, UserPlus, XCircle, MapPin, Upload, Download, ChevronDown } from "lucide-react";
+
+const STATUS_OPTIONS: { value: AssetStatus; label: string }[] = [
+  { value: "available", label: "Available" },
+  { value: "assigned", label: "Assigned" },
+  { value: "decommissioned", label: "Decommissioned" },
+];
 import { useToast } from "@/hooks/use-toast";
 
 export default function Assets() {
   const { assets, customers, addAsset, updateAsset, assignAsset, decommissionAsset } = useStore();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<AssetStatus[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Asset | null>(null);
@@ -101,9 +109,15 @@ export default function Assets() {
     URL.revokeObjectURL(url);
   };
 
+  const toggleStatusFilter = (status: AssetStatus) => {
+    setStatusFilter(prev =>
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
   const filtered = assets.filter(a => {
     const matchSearch = [a.tag, a.name, a.type, a.serialNumber].some(f => f.toLowerCase().includes(search.toLowerCase()));
-    const matchStatus = statusFilter === "all" || a.status === statusFilter;
+    const matchStatus = statusFilter.length === 0 || statusFilter.includes(a.status);
     return matchSearch && matchStatus;
   });
 
@@ -171,17 +185,42 @@ export default function Assets() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search assets..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="available">Available</SelectItem>
-            <SelectItem value="assigned">Assigned</SelectItem>
-            <SelectItem value="decommissioned">Decommissioned</SelectItem>
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[200px] justify-between">
+              {statusFilter.length === 0
+                ? "All Status"
+                : statusFilter.length === 1
+                  ? STATUS_OPTIONS.find(o => o.value === statusFilter[0])?.label
+                  : `${statusFilter.length} statuses`}
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-2" align="start">
+            {STATUS_OPTIONS.map(opt => (
+              <label
+                key={opt.value}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
+              >
+                <Checkbox
+                  checked={statusFilter.includes(opt.value)}
+                  onCheckedChange={() => toggleStatusFilter(opt.value)}
+                />
+                {opt.label}
+              </label>
+            ))}
+            {statusFilter.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-1 text-xs"
+                onClick={() => setStatusFilter([])}
+              >
+                Clear filters
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">

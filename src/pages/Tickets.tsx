@@ -22,8 +22,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Package, MapPin } from "lucide-react";
+import { Plus, Search, Pencil, Package, MapPin, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+
+const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
+];
 
 export default function Tickets() {
   const { tickets, customers, assets, addTicket, updateTicket } = useStore();

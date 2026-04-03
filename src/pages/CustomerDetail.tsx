@@ -27,6 +27,7 @@ import {
   Pencil,
   Trash2,
   Star,
+  Download,
 } from "lucide-react";
 
 export default function CustomerDetail() {

@@ -233,7 +233,28 @@ export default function CustomerDetail() {
                 <h2 className="font-semibold text-foreground">Assigned Assets</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">{customerAssets.length} assets</p>
               </div>
-              <Package className="h-5 w-5 text-muted-foreground" />
+              <div className="flex items-center gap-2">
+                {customerAssets.length > 0 && (
+                  <Button size="sm" variant="outline" onClick={() => {
+                    const headers = ["Tag", "Name", "Type", "Serial Number", "Status", "Location", "Notes"];
+                    const rows = customerAssets.map(a => {
+                      const loc = customer.locations.find(l => l.id === a.locationId);
+                      return [a.tag, a.name, a.type, a.serialNumber, a.status, loc?.name ?? "", a.notes].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+                    });
+                    const csv = [headers.join(","), ...rows].join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = `${customer.name.replace(/[^a-zA-Z0-9]/g, "_")}_assets.csv`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  }}>
+                    <Download className="h-3.5 w-3.5 mr-1" />Export
+                  </Button>
+                )}
+                <Package className="h-5 w-5 text-muted-foreground" />
+              </div>
             </div>
             {customerAssets.length > 0 ? (
               <div className="overflow-x-auto">

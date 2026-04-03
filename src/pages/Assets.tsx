@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, UserPlus, XCircle, MapPin } from "lucide-react";
+import { Plus, Search, Pencil, UserPlus, XCircle, MapPin, Upload, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Assets() {
   const { assets, customers, addAsset, updateAsset, assignAsset, decommissionAsset } = useStore();

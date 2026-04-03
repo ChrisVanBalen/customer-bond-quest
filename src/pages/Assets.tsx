@@ -109,9 +109,15 @@ export default function Assets() {
     URL.revokeObjectURL(url);
   };
 
+  const toggleStatusFilter = (status: AssetStatus) => {
+    setStatusFilter(prev =>
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
+  };
+
   const filtered = assets.filter(a => {
     const matchSearch = [a.tag, a.name, a.type, a.serialNumber].some(f => f.toLowerCase().includes(search.toLowerCase()));
-    const matchStatus = statusFilter === "all" || a.status === statusFilter;
+    const matchStatus = statusFilter.length === 0 || statusFilter.includes(a.status);
     return matchSearch && matchStatus;
   });
 

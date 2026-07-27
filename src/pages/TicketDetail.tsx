@@ -176,7 +176,7 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <ListChecks className="h-4 w-4" /> Tasks
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setTaskDialog(true)}>
+              <Button size="sm" variant="outline" onClick={openAddTask}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
               </Button>
             </div>
@@ -188,24 +188,47 @@ export default function TicketDetail() {
                   {ticket.tasks.map(task => (
                     <div
                       key={task.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => toggleTicketTask(ticket.id, task.id)}
+                      className="group flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      {task.completed ? (
-                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleTicketTask(ticket.id, task.id)}
+                        className="shrink-0"
+                        aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
+                      >
+                        {task.completed ? (
+                          <CheckCircle2 className="h-5 w-5 text-primary" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </button>
                       <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
                         {task.name}
                       </span>
-                      <span className="text-xs text-muted-foreground tabular-nums">{task.time.toFixed(1)} hrs</span>
+                      <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                        <span className={task.actualTime > task.time ? "text-destructive font-medium" : "text-foreground"}>
+                          {(task.actualTime ?? 0).toFixed(1)}
+                        </span>
+                        {" / "}{task.time.toFixed(1)} hrs
+                      </span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditTask(task)} aria-label="Edit task">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteTicketTask(ticket.id, task.id)} aria-label="Delete task">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-end mt-3 pt-3 border-t">
-                  <p className="text-sm font-semibold text-foreground">
-                    Completed: {completedTaskTime.toFixed(1)} / {totalTaskTime.toFixed(1)} hrs
+                <div className="flex justify-end gap-4 mt-3 pt-3 border-t text-sm">
+                  <p className="text-muted-foreground">
+                    Completed: <span className="font-semibold text-foreground">{completedTaskTime.toFixed(1)} / {totalTaskTime.toFixed(1)} hrs</span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    Actual: <span className={`font-semibold ${totalActualTaskTime > totalTaskTime ? "text-destructive" : "text-foreground"}`}>{totalActualTaskTime.toFixed(1)}</span>
+                    <span className="text-foreground"> / {totalTaskTime.toFixed(1)} hrs</span>
                   </p>
                 </div>
               </>

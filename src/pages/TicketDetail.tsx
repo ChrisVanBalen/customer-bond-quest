@@ -84,11 +84,28 @@ export default function TicketDetail() {
     setTimeDialog(false);
   };
 
-  const handleAddTask = () => {
+  const handleSaveTask = () => {
     if (!taskForm.name.trim() || taskForm.time <= 0) return;
-    addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, completed: false });
-    setTaskForm({ name: "", time: 0 });
+    if (editingTaskId) {
+      updateTicketTask(ticket.id, editingTaskId, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime });
+    } else {
+      addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, completed: false });
+    }
+    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setEditingTaskId(null);
     setTaskDialog(false);
+  };
+
+  const openAddTask = () => {
+    setEditingTaskId(null);
+    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setTaskDialog(true);
+  };
+
+  const openEditTask = (task: { id: string; name: string; time: number; actualTime: number }) => {
+    setEditingTaskId(task.id);
+    setTaskForm({ name: task.name, time: task.time, actualTime: task.actualTime ?? 0 });
+    setTaskDialog(true);
   };
 
   const totalBillable = ticket.billableItems.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);

@@ -77,7 +77,8 @@ export interface TimeEntry {
 export interface TicketTask {
   id: string;
   name: string;
-  time: number; // hours
+  time: number; // estimated hours
+  actualTime: number; // actual hours
   completed: boolean;
 }
 

@@ -53,6 +53,7 @@ export default function TicketDetail() {
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
   const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0 });
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingBillableId, setEditingBillableId] = useState<string | null>(null);
 
   if (!ticket) {
     return (
@@ -70,11 +71,28 @@ export default function TicketDetail() {
     setLogDialog(false);
   };
 
-  const handleAddBillable = () => {
+  const handleSaveBillable = () => {
     if (!billableForm.description.trim()) return;
-    addBillableItem(ticket.id, billableForm);
+    if (editingBillableId) {
+      updateBillableItem(ticket.id, editingBillableId, billableForm);
+    } else {
+      addBillableItem(ticket.id, billableForm);
+    }
     setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+    setEditingBillableId(null);
     setBillableDialog(false);
+  };
+
+  const openAddBillable = () => {
+    setEditingBillableId(null);
+    setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+    setBillableDialog(true);
+  };
+
+  const openEditBillable = (item: { id: string; date: string; description: string; quantity: number; unitPrice: number }) => {
+    setEditingBillableId(item.id);
+    setBillableForm({ date: item.date, description: item.description, quantity: item.quantity, unitPrice: item.unitPrice });
+    setBillableDialog(true);
   };
 
   const handleAddTime = () => {
@@ -110,7 +128,7 @@ export default function TicketDetail() {
 
   const totalBillable = ticket.billableItems.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
   const totalHours = ticket.timeEntries.reduce((sum, t) => sum + t.hours, 0);
-  const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + t.time, 0);
+  const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
   const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
   const totalActualTaskTime = ticket.tasks.reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
 

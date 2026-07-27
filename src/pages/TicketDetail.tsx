@@ -28,11 +28,13 @@ import {
   ListChecks,
   CheckCircle2,
   Circle,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
-  const { tickets, customers, assets, addTicketLog, addBillableItem, addTimeEntry, addTicketTask, toggleTicketTask } = useStore();
+  const { tickets, customers, assets, addTicketLog, addBillableItem, addTimeEntry, addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask } = useStore();
 
   const ticket = tickets.find(t => t.id === id);
   const customer = ticket ? customers.find(c => c.id === ticket.customerId) : null;
@@ -49,7 +51,8 @@ export default function TicketDetail() {
   const [logForm, setLogForm] = useState({ author: "", message: "" });
   const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
-  const [taskForm, setTaskForm] = useState({ name: "", time: 0 });
+  const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0 });
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
 
   if (!ticket) {
     return (
@@ -81,17 +84,35 @@ export default function TicketDetail() {
     setTimeDialog(false);
   };
 
-  const handleAddTask = () => {
+  const handleSaveTask = () => {
     if (!taskForm.name.trim() || taskForm.time <= 0) return;
-    addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, completed: false });
-    setTaskForm({ name: "", time: 0 });
+    if (editingTaskId) {
+      updateTicketTask(ticket.id, editingTaskId, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime });
+    } else {
+      addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, completed: false });
+    }
+    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setEditingTaskId(null);
     setTaskDialog(false);
+  };
+
+  const openAddTask = () => {
+    setEditingTaskId(null);
+    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setTaskDialog(true);
+  };
+
+  const openEditTask = (task: { id: string; name: string; time: number; actualTime: number }) => {
+    setEditingTaskId(task.id);
+    setTaskForm({ name: task.name, time: task.time, actualTime: task.actualTime ?? 0 });
+    setTaskDialog(true);
   };
 
   const totalBillable = ticket.billableItems.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
   const totalHours = ticket.timeEntries.reduce((sum, t) => sum + t.hours, 0);
   const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + t.time, 0);
   const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
+  const totalActualTaskTime = ticket.tasks.reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
 
   return (
     <div className="animate-fade-in">
@@ -155,7 +176,7 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <ListChecks className="h-4 w-4" /> Tasks
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setTaskDialog(true)}>
+              <Button size="sm" variant="outline" onClick={openAddTask}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
               </Button>
             </div>
@@ -167,24 +188,47 @@ export default function TicketDetail() {
                   {ticket.tasks.map(task => (
                     <div
                       key={task.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => toggleTicketTask(ticket.id, task.id)}
+                      className="group flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      {task.completed ? (
-                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleTicketTask(ticket.id, task.id)}
+                        className="shrink-0"
+                        aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
+                      >
+                        {task.completed ? (
+                          <CheckCircle2 className="h-5 w-5 text-primary" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </button>
                       <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
                         {task.name}
                       </span>
-                      <span className="text-xs text-muted-foreground tabular-nums">{task.time.toFixed(1)} hrs</span>
+                      <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                        <span className={task.actualTime > task.time ? "text-destructive font-medium" : "text-foreground"}>
+                          {(task.actualTime ?? 0).toFixed(1)}
+                        </span>
+                        {" / "}{task.time.toFixed(1)} hrs
+                      </span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditTask(task)} aria-label="Edit task">
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteTicketTask(ticket.id, task.id)} aria-label="Delete task">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-end mt-3 pt-3 border-t">
-                  <p className="text-sm font-semibold text-foreground">
-                    Completed: {completedTaskTime.toFixed(1)} / {totalTaskTime.toFixed(1)} hrs
+                <div className="flex justify-end gap-4 mt-3 pt-3 border-t text-sm">
+                  <p className="text-muted-foreground">
+                    Completed: <span className="font-semibold text-foreground">{completedTaskTime.toFixed(1)} / {totalTaskTime.toFixed(1)} hrs</span>
+                  </p>
+                  <p className="text-muted-foreground">
+                    Actual: <span className={`font-semibold ${totalActualTaskTime > totalTaskTime ? "text-destructive" : "text-foreground"}`}>{totalActualTaskTime.toFixed(1)}</span>
+                    <span className="text-foreground"> / {totalTaskTime.toFixed(1)} hrs</span>
                   </p>
                 </div>
               </>
@@ -468,20 +512,26 @@ export default function TicketDetail() {
       {/* Task Dialog */}
       <Dialog open={taskDialog} onOpenChange={setTaskDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Add Task</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingTaskId ? "Edit Task" : "Add Task"}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
               <Label>Task Name</Label>
               <Input value={taskForm.name} onChange={e => setTaskForm(f => ({ ...f, name: e.target.value }))} placeholder="Task description" />
             </div>
-            <div className="grid gap-1.5">
-              <Label>Estimated Time (hours)</Label>
-              <Input type="number" min={0.1} step={0.1} value={taskForm.time} onChange={e => setTaskForm(f => ({ ...f, time: Number(e.target.value) }))} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Estimated (hours)</Label>
+                <Input type="number" min={0} step={0.1} value={taskForm.time} onChange={e => setTaskForm(f => ({ ...f, time: Number(e.target.value) }))} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Actual (hours)</Label>
+                <Input type="number" min={0} step={0.1} value={taskForm.actualTime} onChange={e => setTaskForm(f => ({ ...f, actualTime: Number(e.target.value) }))} />
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTaskDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddTask}>Add Task</Button>
+            <Button onClick={handleSaveTask}>{editingTaskId ? "Save Changes" : "Add Task"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

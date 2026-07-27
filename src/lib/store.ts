@@ -77,7 +77,8 @@ export interface TimeEntry {
 export interface TicketTask {
   id: string;
   name: string;
-  time: number; // hours
+  time: number; // estimated hours
+  actualTime: number; // actual hours
   completed: boolean;
 }
 
@@ -255,7 +256,7 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
-        tasks: t.tasks ?? [],
+        tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0 })),
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],
@@ -494,6 +495,26 @@ export function useStore() {
     }));
   }, []);
 
+  const updateTicketTask = useCallback((ticketId: string, taskId: string, patch: Partial<Omit<TicketTask, "id">>) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        tasks: t.tasks.map(tk => tk.id === taskId ? { ...tk, ...patch } : tk),
+      } : t),
+    }));
+  }, []);
+
+  const deleteTicketTask = useCallback((ticketId: string, taskId: string) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        tasks: t.tasks.filter(tk => tk.id !== taskId),
+      } : t),
+    }));
+  }, []);
+
   const addTimeEntry = useCallback((ticketId: string, entry: Omit<TimeEntry, "id">) => {
     setData(prev => ({
       ...prev,
@@ -536,7 +557,7 @@ export function useStore() {
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
     addTicketLog, addBillableItem, addTimeEntry,
-    addTicketTask, toggleTicketTask,
+    addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
   };
 }

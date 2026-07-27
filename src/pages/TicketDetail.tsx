@@ -218,6 +218,47 @@ export default function TicketDetail() {
             )}
           </div>
 
+          {/* Time Entries */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Time Tracking
+              </h2>
+              <Button size="sm" variant="outline" onClick={() => setTimeDialog(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Log Time
+              </Button>
+            </div>
+            {ticket.timeEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No time entries.</p>
+            ) : (
+              <>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left font-medium text-muted-foreground pb-2">Date</th>
+                      <th className="text-left font-medium text-muted-foreground pb-2">Technician</th>
+                      <th className="text-right font-medium text-muted-foreground pb-2">Hours</th>
+                      <th className="text-left font-medium text-muted-foreground pb-2">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {ticket.timeEntries.map(entry => (
+                      <tr key={entry.id}>
+                        <td className="py-2 text-muted-foreground">{entry.date}</td>
+                        <td className="py-2 text-foreground">{entry.technician}</td>
+                        <td className="py-2 text-right tabular-nums">{entry.hours.toFixed(1)}</td>
+                        <td className="py-2 text-foreground">{entry.description}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="flex justify-end mt-3 pt-3 border-t">
+                  <p className="text-sm font-semibold text-foreground">Total: {totalHours.toFixed(1)} hrs</p>
+                </div>
+              </>
+            )}
+          </div>
+
           {/* Billable Items */}
           <div className="bg-card rounded-xl border shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
@@ -256,47 +297,6 @@ export default function TicketDetail() {
                 </table>
                 <div className="flex justify-end mt-3 pt-3 border-t">
                   <p className="text-sm font-semibold text-foreground">Total: ${totalBillable.toFixed(2)}</p>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Time Entries */}
-          <div className="bg-card rounded-xl border shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <Clock className="h-4 w-4" /> Time Tracking
-              </h2>
-              <Button size="sm" variant="outline" onClick={() => setTimeDialog(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Log Time
-              </Button>
-            </div>
-            {ticket.timeEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No time entries.</p>
-            ) : (
-              <>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left font-medium text-muted-foreground pb-2">Date</th>
-                      <th className="text-left font-medium text-muted-foreground pb-2">Technician</th>
-                      <th className="text-right font-medium text-muted-foreground pb-2">Hours</th>
-                      <th className="text-left font-medium text-muted-foreground pb-2">Description</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {ticket.timeEntries.map(entry => (
-                      <tr key={entry.id}>
-                        <td className="py-2 text-muted-foreground">{entry.date}</td>
-                        <td className="py-2 text-foreground">{entry.technician}</td>
-                        <td className="py-2 text-right tabular-nums">{entry.hours.toFixed(1)}</td>
-                        <td className="py-2 text-foreground">{entry.description}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="flex justify-end mt-3 pt-3 border-t">
-                  <p className="text-sm font-semibold text-foreground">Total: {totalHours.toFixed(1)} hrs</p>
                 </div>
               </>
             )}

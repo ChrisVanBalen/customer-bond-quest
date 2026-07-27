@@ -557,7 +557,7 @@ export function useStore() {
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
     addTicketLog, addBillableItem, addTimeEntry,
-    addTicketTask, toggleTicketTask,
+    addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
   };
 }

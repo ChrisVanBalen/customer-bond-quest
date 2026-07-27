@@ -256,7 +256,7 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
-        tasks: t.tasks ?? [],
+        tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0 })),
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],

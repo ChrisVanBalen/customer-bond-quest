@@ -576,7 +576,7 @@ export function useStore() {
     addCustomerLocation, updateCustomerLocation, deleteCustomerLocation,
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
-    addTicketLog, addBillableItem, addTimeEntry,
+    addTicketLog, addBillableItem, updateBillableItem, deleteBillableItem, addTimeEntry,
     addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
   };

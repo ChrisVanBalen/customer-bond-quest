@@ -112,6 +112,7 @@ export default function TicketDetail() {
   const totalHours = ticket.timeEntries.reduce((sum, t) => sum + t.hours, 0);
   const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + t.time, 0);
   const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
+  const totalActualTaskTime = ticket.tasks.reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
 
   return (
     <div className="animate-fade-in">

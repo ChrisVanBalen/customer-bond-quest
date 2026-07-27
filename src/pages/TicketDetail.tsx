@@ -355,6 +355,32 @@ export default function TicketDetail() {
               </div>
             </div>
           </div>
+
+          {/* Other Open Tickets */}
+          {customer && (
+            <div className="bg-card rounded-xl border shadow-sm p-6">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Other Open Tickets</h2>
+              {(() => {
+                const otherOpenTickets = tickets.filter(t => t.customerId === customer.id && t.id !== ticket.id && t.status !== "closed");
+                if (otherOpenTickets.length === 0) return (
+                  <p className="text-sm text-muted-foreground">No other open tickets.</p>
+                );
+                return (
+                  <div className="space-y-3">
+                    {otherOpenTickets.map(t => (
+                      <Link key={t.id} to={`/tickets/${t.id}`} className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-foreground truncate">{t.title}</span>
+                          <StatusBadge status={t.status} />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{t.priority} priority · Updated {t.updatedAt}</p>
+                      </Link>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
 

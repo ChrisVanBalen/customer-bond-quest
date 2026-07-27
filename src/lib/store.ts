@@ -475,6 +475,26 @@ export function useStore() {
     }));
   }, []);
 
+  const updateBillableItem = useCallback((ticketId: string, itemId: string, patch: Partial<Omit<BillableItem, "id">>) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        billableItems: t.billableItems.map(b => b.id === itemId ? { ...b, ...patch } : b),
+      } : t),
+    }));
+  }, []);
+
+  const deleteBillableItem = useCallback((ticketId: string, itemId: string) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(t => t.id === ticketId ? {
+        ...t, updatedAt: new Date().toISOString().split("T")[0],
+        billableItems: t.billableItems.filter(b => b.id !== itemId),
+      } : t),
+    }));
+  }, []);
+
   const addTicketTask = useCallback((ticketId: string, task: Omit<TicketTask, "id">) => {
     setData(prev => ({
       ...prev,
@@ -556,7 +576,7 @@ export function useStore() {
     addCustomerLocation, updateCustomerLocation, deleteCustomerLocation,
     addAsset, updateAsset, assignAsset, decommissionAsset,
     addTicket, updateTicket,
-    addTicketLog, addBillableItem, addTimeEntry,
+    addTicketLog, addBillableItem, updateBillableItem, deleteBillableItem, addTimeEntry,
     addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
   };

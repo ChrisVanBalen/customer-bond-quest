@@ -34,7 +34,7 @@ import {
 
 export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
-  const { tickets, customers, assets, addTicketLog, addBillableItem, addTimeEntry, addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask } = useStore();
+  const { tickets, customers, assets, addTicketLog, addBillableItem, updateBillableItem, deleteBillableItem, addTimeEntry, addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask } = useStore();
 
   const ticket = tickets.find(t => t.id === id);
   const customer = ticket ? customers.find(c => c.id === ticket.customerId) : null;
@@ -53,6 +53,7 @@ export default function TicketDetail() {
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
   const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0 });
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingBillableId, setEditingBillableId] = useState<string | null>(null);
 
   if (!ticket) {
     return (
@@ -70,11 +71,28 @@ export default function TicketDetail() {
     setLogDialog(false);
   };
 
-  const handleAddBillable = () => {
+  const handleSaveBillable = () => {
     if (!billableForm.description.trim()) return;
-    addBillableItem(ticket.id, billableForm);
+    if (editingBillableId) {
+      updateBillableItem(ticket.id, editingBillableId, billableForm);
+    } else {
+      addBillableItem(ticket.id, billableForm);
+    }
     setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+    setEditingBillableId(null);
     setBillableDialog(false);
+  };
+
+  const openAddBillable = () => {
+    setEditingBillableId(null);
+    setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+    setBillableDialog(true);
+  };
+
+  const openEditBillable = (item: { id: string; date: string; description: string; quantity: number; unitPrice: number }) => {
+    setEditingBillableId(item.id);
+    setBillableForm({ date: item.date, description: item.description, quantity: item.quantity, unitPrice: item.unitPrice });
+    setBillableDialog(true);
   };
 
   const handleAddTime = () => {
@@ -110,7 +128,7 @@ export default function TicketDetail() {
 
   const totalBillable = ticket.billableItems.reduce((sum, b) => sum + b.quantity * b.unitPrice, 0);
   const totalHours = ticket.timeEntries.reduce((sum, t) => sum + t.hours, 0);
-  const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + t.time, 0);
+  const completedTaskTime = ticket.tasks.filter(t => t.completed).reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
   const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
   const totalActualTaskTime = ticket.tasks.reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
 
@@ -309,7 +327,7 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <DollarSign className="h-4 w-4" /> Billable Items
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setBillableDialog(true)}>
+              <Button size="sm" variant="outline" onClick={openAddBillable}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Item
               </Button>
             </div>
@@ -325,16 +343,27 @@ export default function TicketDetail() {
                       <th className="text-right font-medium text-muted-foreground pb-2">Qty</th>
                       <th className="text-right font-medium text-muted-foreground pb-2">Price</th>
                       <th className="text-right font-medium text-muted-foreground pb-2">Total</th>
+                      <th className="w-16 pb-2"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {ticket.billableItems.map(item => (
-                      <tr key={item.id}>
+                      <tr key={item.id} className="group">
                         <td className="py-2 text-muted-foreground">{item.date}</td>
                         <td className="py-2 text-foreground">{item.description}</td>
                         <td className="py-2 text-right tabular-nums">{item.quantity}</td>
                         <td className="py-2 text-right tabular-nums">${item.unitPrice.toFixed(2)}</td>
                         <td className="py-2 text-right tabular-nums font-medium">${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                        <td className="py-2 text-right">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBillable(item)} aria-label="Edit item">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteBillableItem(ticket.id, item.id)} aria-label="Delete item">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -452,7 +481,7 @@ export default function TicketDetail() {
       {/* Billable Dialog */}
       <Dialog open={billableDialog} onOpenChange={setBillableDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Add Billable Item</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingBillableId ? "Edit Billable Item" : "Add Billable Item"}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-1.5">
               <Label>Date</Label>
@@ -475,7 +504,7 @@ export default function TicketDetail() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBillableDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddBillable}>Add Item</Button>
+            <Button onClick={handleSaveBillable}>{editingBillableId ? "Save Changes" : "Add Item"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

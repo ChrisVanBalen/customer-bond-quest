@@ -28,6 +28,8 @@ import {
   ListChecks,
   CheckCircle2,
   Circle,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 export default function TicketDetail() {

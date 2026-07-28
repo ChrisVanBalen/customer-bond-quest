@@ -147,11 +147,17 @@ interface StoreData {
   assets: Asset[];
   tickets: Ticket[];
   agreements: ServiceAgreement[];
+  technicians: Technician[];
 }
 
 const STORAGE_KEY = "crm-psa-data";
 
 const defaultData: StoreData = {
+  technicians: [
+    { id: "tech1", name: "Alex Rivera", email: "alex@commandhub.com", phone: "(555) 111-2233", role: "Senior Technician", active: true, createdAt: "2024-10-01" },
+    { id: "tech2", name: "Jordan Chen", email: "jordan@commandhub.com", phone: "(555) 222-3344", role: "Field Engineer", active: true, createdAt: "2024-10-15" },
+    { id: "tech3", name: "Sam Patel", email: "sam@commandhub.com", phone: "(555) 333-4455", role: "Help Desk Lead", active: true, createdAt: "2024-11-01" },
+  ],
   customers: [
     {
       id: "c1", name: "Meridian Health Systems", email: "contact@meridianhs.com", phone: "(555) 234-5678", company: "Meridian Health Systems",

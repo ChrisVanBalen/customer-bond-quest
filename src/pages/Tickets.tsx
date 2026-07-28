@@ -372,5 +372,3 @@ export default function Tickets() {
   );
 }
 
-// helper kept out of component scope
-function technicianIds_add(_ids: string[], id: string) { return id; }

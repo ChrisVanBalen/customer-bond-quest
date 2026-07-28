@@ -14,6 +14,7 @@ import CustomerDetail from "./pages/CustomerDetail";
 import TicketDetail from "./pages/TicketDetail";
 import Agreements from "./pages/Agreements";
 import AgreementDetail from "./pages/AgreementDetail";
+import Technicians from "./pages/Technicians";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Package, MapPin, ChevronDown } from "lucide-react";
+import { Plus, Search, Pencil, Package, MapPin, ChevronDown, Star, UserCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
@@ -33,13 +33,15 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
 ];
 
 export default function Tickets() {
-  const { tickets, customers, assets, addTicket, updateTicket } = useStore();
+  const { tickets, customers, assets, technicians, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
+  const [techFilter, setTechFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
+    technicianIds: [] as string[], primaryTechnicianId: null as string | null,
   });
 
   const toggleStatusFilter = (status: TicketStatus) => {
@@ -51,7 +53,12 @@ export default function Tickets() {
   const filtered = tickets.filter(t => {
     const matchSearch = [t.title, t.description].some(f => f.toLowerCase().includes(search.toLowerCase()));
     const matchStatus = statusFilter.length === 0 || statusFilter.includes(t.status);
-    return matchSearch && matchStatus;
+    const matchTech = techFilter === "all"
+      ? true
+      : techFilter === "unassigned"
+        ? t.technicianIds.length === 0
+        : t.technicianIds.includes(techFilter);
+    return matchSearch && matchStatus && matchTech;
   });
 
   const selectedCustomer = customers.find(c => c.id === form.customerId);
@@ -59,17 +66,29 @@ export default function Tickets() {
   const customerAssets = form.customerId
     ? assets.filter(a => a.assignedTo === form.customerId && a.status === "assigned")
     : [];
+  const activeTechnicians = technicians.filter(t => t.active);
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, priority: "medium", status: "open" });
+    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
     setDialogOpen(true);
   };
 
   const openEdit = (t: Ticket) => {
     setEditing(t);
-    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, priority: t.priority, status: t.status });
+    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, priority: t.priority, status: t.status, technicianIds: t.technicianIds, primaryTechnicianId: t.primaryTechnicianId });
     setDialogOpen(true);
+  };
+
+  const toggleFormTech = (techId: string) => {
+    setForm(f => {
+      const has = f.technicianIds.includes(techId);
+      const next = has ? f.technicianIds.filter(id => id !== techId) : [...f.technicianIds, techId];
+      let primary = f.primaryTechnicianId;
+      if (has && primary === techId) primary = next[0] ?? null;
+      if (!has && !primary) primary = techId;
+      return { ...f, technicianIds: next, primaryTechnicianId: primary };
+    });
   };
 
   const handleSave = () => {
@@ -131,6 +150,18 @@ export default function Tickets() {
             )}
           </PopoverContent>
         </Popover>
+        <Select value={techFilter} onValueChange={setTechFilter}>
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="All Technicians" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Technicians</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
+            {technicians.map(t => (
+              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
@@ -142,6 +173,7 @@ export default function Tickets() {
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Customer</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden xl:table-cell">Location</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Asset</th>
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Technician</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Priority</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Status</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Updated</th>
@@ -155,6 +187,8 @@ export default function Tickets() {
                 const location = t.locationId && customer
                   ? customer.locations?.find(l => l.id === t.locationId)
                   : customer?.locations?.find(l => l.isPrimary);
+                const primaryTech = t.primaryTechnicianId ? technicians.find(tt => tt.id === t.primaryTechnicianId) : null;
+                const extraTechs = t.technicianIds.filter(id => id !== t.primaryTechnicianId).length;
                 return (
                   <tr key={t.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
@@ -181,6 +215,17 @@ export default function Tickets() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      {primaryTech ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs">
+                          <UserCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-foreground">{primaryTech.name}</span>
+                          {extraTechs > 0 && <span className="text-muted-foreground">+{extraTechs}</span>}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">Unassigned</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3"><StatusBadge status={t.priority} /></td>
                     <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
                     <td className="px-4 py-3 text-muted-foreground tabular-nums hidden lg:table-cell">{t.updatedAt}</td>
@@ -193,7 +238,7 @@ export default function Tickets() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No tickets found</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No tickets found</td></tr>
               )}
             </tbody>
           </table>
@@ -201,7 +246,7 @@ export default function Tickets() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Ticket" : "New Ticket"}</DialogTitle>
           </DialogHeader>
@@ -253,6 +298,39 @@ export default function Tickets() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid gap-1.5">
+              <Label>Technicians</Label>
+              {activeTechnicians.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No active technicians. Add one from the Technicians page.</p>
+              ) : (
+                <div className="border rounded-md divide-y">
+                  {activeTechnicians.map(tech => {
+                    const assigned = form.technicianIds.includes(tech.id);
+                    const isPrimary = form.primaryTechnicianId === tech.id;
+                    return (
+                      <div key={tech.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+                        <Checkbox
+                          checked={assigned}
+                          onCheckedChange={() => toggleFormTech(tech.id)}
+                        />
+                        <span className="flex-1">{tech.name} <span className="text-xs text-muted-foreground">— {tech.role}</span></span>
+                        {assigned && (
+                          <button
+                            type="button"
+                            onClick={() => setForm(f => ({ ...f, primaryTechnicianId: tech.id }))}
+                            className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${isPrimary ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+                            aria-label={isPrimary ? "Primary technician" : "Set as primary"}
+                          >
+                            <Star className={`h-3 w-3 ${isPrimary ? "fill-primary" : ""}`} />
+                            {isPrimary ? "Primary" : "Set primary"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
                 <Label>Priority</Label>
@@ -293,3 +371,4 @@ export default function Tickets() {
     </div>
   );
 }
+

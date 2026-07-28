@@ -82,6 +82,16 @@ export interface TicketTask {
   completed: boolean;
 }
 
+export interface Technician {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string; // e.g. "Senior Tech", "Field Engineer"
+  active: boolean;
+  createdAt: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -91,6 +101,8 @@ export interface Ticket {
   assetId: string | null;
   priority: TicketPriority;
   status: TicketStatus;
+  technicianIds: string[];
+  primaryTechnicianId: string | null;
   createdAt: string;
   updatedAt: string;
   tasks: TicketTask[];
@@ -135,11 +147,17 @@ interface StoreData {
   assets: Asset[];
   tickets: Ticket[];
   agreements: ServiceAgreement[];
+  technicians: Technician[];
 }
 
 const STORAGE_KEY = "crm-psa-data";
 
 const defaultData: StoreData = {
+  technicians: [
+    { id: "tech1", name: "Alex Rivera", email: "alex@commandhub.com", phone: "(555) 111-2233", role: "Senior Technician", active: true, createdAt: "2024-10-01" },
+    { id: "tech2", name: "Jordan Chen", email: "jordan@commandhub.com", phone: "(555) 222-3344", role: "Field Engineer", active: true, createdAt: "2024-10-15" },
+    { id: "tech3", name: "Sam Patel", email: "sam@commandhub.com", phone: "(555) 333-4455", role: "Help Desk Lead", active: true, createdAt: "2024-11-01" },
+  ],
   customers: [
     {
       id: "c1", name: "Meridian Health Systems", email: "contact@meridianhs.com", phone: "(555) 234-5678", company: "Meridian Health Systems",
@@ -208,9 +226,9 @@ const defaultData: StoreData = {
     },
   ],
   tickets: [
-    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", priority: "high", status: "in_progress", createdAt: "2025-03-20", updatedAt: "2025-03-21", tasks: [], logs: [], billableItems: [], timeEntries: [] },
-    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, priority: "medium", status: "open", createdAt: "2025-03-19", updatedAt: "2025-03-19", tasks: [], logs: [], billableItems: [], timeEntries: [] },
-    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", priority: "medium", status: "open", createdAt: "2025-03-18", updatedAt: "2025-03-18", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", priority: "high", status: "in_progress", technicianIds: ["tech1"], primaryTechnicianId: "tech1", createdAt: "2025-03-20", updatedAt: "2025-03-21", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, priority: "medium", status: "open", technicianIds: ["tech2", "tech3"], primaryTechnicianId: "tech2", createdAt: "2025-03-19", updatedAt: "2025-03-19", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null, createdAt: "2025-03-18", updatedAt: "2025-03-18", tasks: [], logs: [], billableItems: [], timeEntries: [] },
   ],
   agreements: [
     {
@@ -256,6 +274,8 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
+        technicianIds: t.technicianIds ?? [],
+        primaryTechnicianId: t.primaryTechnicianId ?? null,
         tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0 })),
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
@@ -263,6 +283,8 @@ function loadData(): StoreData {
       }));
       // Migrate agreements
       parsed.agreements = parsed.agreements ?? [];
+      // Migrate technicians
+      parsed.technicians = parsed.technicians ?? defaultData.technicians;
       // Migrate customers to have locations
       parsed.customers = parsed.customers.map((c: any) => ({
         ...c,
@@ -570,6 +592,32 @@ export function useStore() {
     }));
   }, []);
 
+  const addTechnician = useCallback((t: Omit<Technician, "id" | "createdAt">) => {
+    setData(prev => ({
+      ...prev,
+      technicians: [...prev.technicians, { ...t, id: crypto.randomUUID(), createdAt: new Date().toISOString().split("T")[0] }],
+    }));
+  }, []);
+
+  const updateTechnician = useCallback((id: string, updates: Partial<Technician>) => {
+    setData(prev => ({
+      ...prev,
+      technicians: prev.technicians.map(t => t.id === id ? { ...t, ...updates } : t),
+    }));
+  }, []);
+
+  const deleteTechnician = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      technicians: prev.technicians.filter(t => t.id !== id),
+      tickets: prev.tickets.map(t => ({
+        ...t,
+        technicianIds: t.technicianIds.filter(tid => tid !== id),
+        primaryTechnicianId: t.primaryTechnicianId === id ? null : t.primaryTechnicianId,
+      })),
+    }));
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
@@ -579,5 +627,6 @@ export function useStore() {
     addTicketLog, addBillableItem, updateBillableItem, deleteBillableItem, addTimeEntry,
     addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
+    addTechnician, updateTechnician, deleteTechnician,
   };
 }

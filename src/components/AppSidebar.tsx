@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, TicketCheck, FileSignature } from "lucide-react";
+import { LayoutDashboard, Users, Package, TicketCheck, FileSignature, Wrench } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -17,6 +17,7 @@ const navItems = [
   { title: "Customers", url: "/customers", icon: Users },
   { title: "Assets", url: "/assets", icon: Package },
   { title: "Tickets", url: "/tickets", icon: TicketCheck },
+  { title: "Technicians", url: "/technicians", icon: Wrench },
   { title: "Agreements", url: "/agreements", icon: FileSignature },
 ];
 

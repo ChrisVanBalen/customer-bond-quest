@@ -34,7 +34,7 @@ import {
 
 export default function TicketDetail() {
   const { id } = useParams<{ id: string }>();
-  const { tickets, customers, assets, addTicketLog, addBillableItem, updateBillableItem, deleteBillableItem, addTimeEntry, addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask } = useStore();
+  const { tickets, customers, assets, technicians, addTicketLog, addBillableItem, updateBillableItem, deleteBillableItem, addTimeEntry, addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask, updateTicket } = useStore();
 
   const ticket = tickets.find(t => t.id === id);
   const customer = ticket ? customers.find(c => c.id === ticket.customerId) : null;

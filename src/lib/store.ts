@@ -274,6 +274,8 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
+        technicianIds: t.technicianIds ?? [],
+        primaryTechnicianId: t.primaryTechnicianId ?? null,
         tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0 })),
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
@@ -281,6 +283,8 @@ function loadData(): StoreData {
       }));
       // Migrate agreements
       parsed.agreements = parsed.agreements ?? [];
+      // Migrate technicians
+      parsed.technicians = parsed.technicians ?? defaultData.technicians;
       // Migrate customers to have locations
       parsed.customers = parsed.customers.map((c: any) => ({
         ...c,

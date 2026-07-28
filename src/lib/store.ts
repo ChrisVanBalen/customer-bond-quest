@@ -592,6 +592,32 @@ export function useStore() {
     }));
   }, []);
 
+  const addTechnician = useCallback((t: Omit<Technician, "id" | "createdAt">) => {
+    setData(prev => ({
+      ...prev,
+      technicians: [...prev.technicians, { ...t, id: crypto.randomUUID(), createdAt: new Date().toISOString().split("T")[0] }],
+    }));
+  }, []);
+
+  const updateTechnician = useCallback((id: string, updates: Partial<Technician>) => {
+    setData(prev => ({
+      ...prev,
+      technicians: prev.technicians.map(t => t.id === id ? { ...t, ...updates } : t),
+    }));
+  }, []);
+
+  const deleteTechnician = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      technicians: prev.technicians.filter(t => t.id !== id),
+      tickets: prev.tickets.map(t => ({
+        ...t,
+        technicianIds: t.technicianIds.filter(tid => tid !== id),
+        primaryTechnicianId: t.primaryTechnicianId === id ? null : t.primaryTechnicianId,
+      })),
+    }));
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
@@ -601,5 +627,6 @@ export function useStore() {
     addTicketLog, addBillableItem, updateBillableItem, deleteBillableItem, addTimeEntry,
     addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
+    addTechnician, updateTechnician, deleteTechnician,
   };
 }

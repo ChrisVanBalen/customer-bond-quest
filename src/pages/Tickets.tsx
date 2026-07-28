@@ -83,8 +83,6 @@ export default function Tickets() {
   const toggleFormTech = (techId: string) => {
     setForm(f => {
       const has = f.technicianIds.includes(techId);
-      const technicianIds = has ? f.technicianIds.filter(id => id !== techId) : [...f.technicianIds, technicianIds_add(f.technicianIds, techId)][0] as unknown as string;
-      // simpler:
       const next = has ? f.technicianIds.filter(id => id !== techId) : [...f.technicianIds, techId];
       let primary = f.primaryTechnicianId;
       if (has && primary === techId) primary = next[0] ?? null;

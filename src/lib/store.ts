@@ -82,6 +82,16 @@ export interface TicketTask {
   completed: boolean;
 }
 
+export interface Technician {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string; // e.g. "Senior Tech", "Field Engineer"
+  active: boolean;
+  createdAt: string;
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -91,6 +101,8 @@ export interface Ticket {
   assetId: string | null;
   priority: TicketPriority;
   status: TicketStatus;
+  technicianIds: string[];
+  primaryTechnicianId: string | null;
   createdAt: string;
   updatedAt: string;
   tasks: TicketTask[];

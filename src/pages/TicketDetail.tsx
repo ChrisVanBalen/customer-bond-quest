@@ -398,6 +398,83 @@ export default function TicketDetail() {
             </div>
           )}
 
+          {/* Assigned Technicians */}
+          <div className="bg-card rounded-xl border shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Assigned Technicians</h2>
+            {(() => {
+              const activeTechs = technicians.filter(t => t.active);
+              const assigned = ticket.technicianIds
+                .map(id => technicians.find(t => t.id === id))
+                .filter((t): t is NonNullable<typeof t> => !!t);
+              const toggleTech = (techId: string) => {
+                const has = ticket.technicianIds.includes(techId);
+                const next = has
+                  ? ticket.technicianIds.filter(id => id !== techId)
+                  : [...ticket.technicianIds, techId];
+                let primary = ticket.primaryTechnicianId;
+                if (has && primary === techId) primary = next[0] ?? null;
+                if (!has && !primary) primary = techId;
+                updateTicket(ticket.id, { technicianIds: next, primaryTechnicianId: primary });
+              };
+              const setPrimary = (techId: string) => {
+                updateTicket(ticket.id, { primaryTechnicianId: techId });
+              };
+              return (
+                <div className="space-y-3">
+                  {assigned.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No technicians assigned.</p>
+                  )}
+                  {assigned.length > 0 && (
+                    <div className="space-y-2">
+                      {assigned.map(t => {
+                        const isPrimary = ticket.primaryTechnicianId === t.id;
+                        return (
+                          <div key={t.id} className="flex items-center justify-between gap-2 p-2 rounded-md border">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-foreground truncate">{t.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">{t.role || t.email}</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setPrimary(t.id)}
+                              className={`text-xs px-2 py-1 rounded shrink-0 ${isPrimary ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+                            >
+                              {isPrimary ? "★ Primary" : "Set primary"}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {activeTechs.length > 0 && (
+                    <details className="text-sm">
+                      <summary className="cursor-pointer text-primary hover:underline">Manage assignments</summary>
+                      <div className="mt-2 border rounded-md divide-y">
+                        {activeTechs.map(t => {
+                          const isAssigned = ticket.technicianIds.includes(t.id);
+                          return (
+                            <label key={t.id} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/50">
+                              <input
+                                type="checkbox"
+                                checked={isAssigned}
+                                onChange={() => toggleTech(t.id)}
+                                className="h-4 w-4"
+                              />
+                              <span className="flex-1 text-sm">{t.name}</span>
+                              <span className="text-xs text-muted-foreground">{t.role}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+
+
+
           {/* Summary Card */}
           <div className="bg-card rounded-xl border shadow-sm p-6">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Summary</h2>

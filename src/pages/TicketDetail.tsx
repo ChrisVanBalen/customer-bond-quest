@@ -641,6 +641,18 @@ export default function TicketDetail() {
                 <Input type="number" min={0} step={0.1} value={taskForm.actualTime} onChange={e => setTaskForm(f => ({ ...f, actualTime: Number(e.target.value) }))} />
               </div>
             </div>
+            <div className="grid gap-1.5">
+              <Label>Assigned Technician</Label>
+              <Select value={taskForm.technicianId ?? "none"} onValueChange={v => setTaskForm(f => ({ ...f, technicianId: v === "none" ? null : v }))}>
+                <SelectTrigger><SelectValue placeholder="Select technician..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {technicians.filter(t => t.active).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTaskDialog(false)}>Cancel</Button>

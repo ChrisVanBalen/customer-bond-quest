@@ -33,14 +33,14 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
 ];
 
 export default function Tickets() {
-  const { tickets, customers, assets, technicians, addTicket, updateTicket } = useStore();
+  const { tickets, customers, assets, technicians, projects, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [techFilter, setTechFilter] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
-    title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
+    title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, projectId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
     technicianIds: [] as string[], primaryTechnicianId: null as string | null,
   });
 
@@ -84,13 +84,13 @@ export default function Tickets() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
+    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
     setDialogOpen(true);
   };
 
   const openEdit = (t: Ticket) => {
     setEditing(t);
-    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, priority: t.priority, status: t.status, technicianIds: t.technicianIds, primaryTechnicianId: t.primaryTechnicianId });
+    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, projectId: t.projectId, priority: t.priority, status: t.status, technicianIds: t.technicianIds, primaryTechnicianId: t.primaryTechnicianId });
     setDialogOpen(true);
   };
 
@@ -336,6 +336,22 @@ export default function Tickets() {
                   {customerAssets.map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.tag} — {a.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Project</Label>
+              <Select value={form.projectId ?? "none"} onValueChange={v => setForm(f => ({ ...f, projectId: v === "none" ? null : v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project (optional)..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No project</SelectItem>
+                  {projects
+                    .filter(p => !form.customerId || p.customerId === form.customerId)
+                    .map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>

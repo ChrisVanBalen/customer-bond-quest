@@ -80,6 +80,7 @@ export interface TicketTask {
   time: number; // estimated hours
   actualTime: number; // actual hours
   completed: boolean;
+  technicianId: string | null;
 }
 
 export interface Technician {
@@ -99,6 +100,7 @@ export interface Ticket {
   customerId: string;
   locationId: string | null;
   assetId: string | null;
+  projectId: string | null;
   priority: TicketPriority;
   status: TicketStatus;
   technicianIds: string[];
@@ -110,6 +112,22 @@ export interface Ticket {
   billableItems: BillableItem[];
   timeEntries: TimeEntry[];
 }
+
+export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  customerId: string;
+  status: ProjectStatus;
+  startDate: string;
+  targetDate: string;
+  managerId: string | null; // technician leading the project
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled";
 
@@ -148,6 +166,7 @@ interface StoreData {
   tickets: Ticket[];
   agreements: ServiceAgreement[];
   technicians: Technician[];
+  projects: Project[];
 }
 
 const STORAGE_KEY = "crm-psa-data";
@@ -225,10 +244,17 @@ const defaultData: StoreData = {
       ],
     },
   ],
+  projects: [
+    {
+      id: "p1", name: "HQ Network Refresh", description: "Replace aging switches and access points across the main office.",
+      customerId: "c1", status: "active", startDate: "2025-03-01", targetDate: "2025-06-30",
+      managerId: "tech1", createdAt: "2025-03-01", updatedAt: "2025-03-20",
+    },
+  ],
   tickets: [
-    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", priority: "high", status: "in_progress", technicianIds: ["tech1"], primaryTechnicianId: "tech1", createdAt: "2025-03-20", updatedAt: "2025-03-21", tasks: [], logs: [], billableItems: [], timeEntries: [] },
-    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, priority: "medium", status: "open", technicianIds: ["tech2", "tech3"], primaryTechnicianId: "tech2", createdAt: "2025-03-19", updatedAt: "2025-03-19", tasks: [], logs: [], billableItems: [], timeEntries: [] },
-    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null, createdAt: "2025-03-18", updatedAt: "2025-03-18", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", projectId: null, priority: "high", status: "in_progress", technicianIds: ["tech1"], primaryTechnicianId: "tech1", createdAt: "2025-03-20", updatedAt: "2025-03-21", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: ["tech2", "tech3"], primaryTechnicianId: "tech2", createdAt: "2025-03-19", updatedAt: "2025-03-19", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", projectId: "p1", priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null, createdAt: "2025-03-18", updatedAt: "2025-03-18", tasks: [], logs: [], billableItems: [], timeEntries: [] },
   ],
   agreements: [
     {
@@ -274,13 +300,16 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
+        projectId: t.projectId ?? null,
         technicianIds: t.technicianIds ?? [],
         primaryTechnicianId: t.primaryTechnicianId ?? null,
-        tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0 })),
+        tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0, technicianId: tk.technicianId ?? null })),
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],
       }));
+      // Migrate projects
+      parsed.projects = parsed.projects ?? defaultData.projects;
       // Migrate agreements
       parsed.agreements = parsed.agreements ?? [];
       // Migrate technicians
@@ -610,11 +639,36 @@ export function useStore() {
     setData(prev => ({
       ...prev,
       technicians: prev.technicians.filter(t => t.id !== id),
+      projects: prev.projects.map(p => p.managerId === id ? { ...p, managerId: null } : p),
       tickets: prev.tickets.map(t => ({
         ...t,
         technicianIds: t.technicianIds.filter(tid => tid !== id),
         primaryTechnicianId: t.primaryTechnicianId === id ? null : t.primaryTechnicianId,
+        tasks: t.tasks.map(tk => tk.technicianId === id ? { ...tk, technicianId: null } : tk),
       })),
+    }));
+  }, []);
+
+  const addProject = useCallback((p: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => ({
+      ...prev,
+      projects: [...prev.projects, { ...p, id: crypto.randomUUID(), createdAt: now, updatedAt: now }],
+    }));
+  }, []);
+
+  const updateProject = useCallback((id: string, updates: Partial<Project>) => {
+    setData(prev => ({
+      ...prev,
+      projects: prev.projects.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString().split("T")[0] } : p),
+    }));
+  }, []);
+
+  const deleteProject = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      projects: prev.projects.filter(p => p.id !== id),
+      tickets: prev.tickets.map(t => t.projectId === id ? { ...t, projectId: null } : t),
     }));
   }, []);
 
@@ -628,5 +682,6 @@ export function useStore() {
     addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
     addTechnician, updateTechnician, deleteTechnician,
+    addProject, updateProject, deleteProject,
   };
 }

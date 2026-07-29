@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -51,7 +52,7 @@ export default function TicketDetail() {
   const [logForm, setLogForm] = useState({ author: "", message: "" });
   const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
-  const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0 });
+  const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0, technicianId: null as string | null });
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingBillableId, setEditingBillableId] = useState<string | null>(null);
 
@@ -105,24 +106,24 @@ export default function TicketDetail() {
   const handleSaveTask = () => {
     if (!taskForm.name.trim() || taskForm.time <= 0) return;
     if (editingTaskId) {
-      updateTicketTask(ticket.id, editingTaskId, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime });
+      updateTicketTask(ticket.id, editingTaskId, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, technicianId: taskForm.technicianId });
     } else {
-      addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, completed: false });
+      addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, technicianId: taskForm.technicianId, completed: false });
     }
-    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setTaskForm({ name: "", time: 0, actualTime: 0, technicianId: null });
     setEditingTaskId(null);
     setTaskDialog(false);
   };
 
   const openAddTask = () => {
     setEditingTaskId(null);
-    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setTaskForm({ name: "", time: 0, actualTime: 0, technicianId: ticket.primaryTechnicianId ?? null });
     setTaskDialog(true);
   };
 
-  const openEditTask = (task: { id: string; name: string; time: number; actualTime: number }) => {
+  const openEditTask = (task: { id: string; name: string; time: number; actualTime: number; technicianId?: string | null }) => {
     setEditingTaskId(task.id);
-    setTaskForm({ name: task.name, time: task.time, actualTime: task.actualTime ?? 0 });
+    setTaskForm({ name: task.name, time: task.time, actualTime: task.actualTime ?? 0, technicianId: task.technicianId ?? null });
     setTaskDialog(true);
   };
 
@@ -220,9 +221,16 @@ export default function TicketDetail() {
                           <Circle className="h-5 w-5 text-muted-foreground" />
                         )}
                       </button>
-                      <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                        {task.name}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-sm block truncate ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                          {task.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {task.technicianId
+                            ? technicians.find(tech => tech.id === task.technicianId)?.name ?? "Unknown technician"
+                            : "Unassigned"}
+                        </span>
+                      </div>
                       <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
                         <span className={task.actualTime > task.time ? "text-destructive font-medium" : "text-foreground"}>
                           {(task.actualTime ?? 0).toFixed(1)}
@@ -633,6 +641,18 @@ export default function TicketDetail() {
                 <Label>Actual (hours)</Label>
                 <Input type="number" min={0} step={0.1} value={taskForm.actualTime} onChange={e => setTaskForm(f => ({ ...f, actualTime: Number(e.target.value) }))} />
               </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Assigned Technician</Label>
+              <Select value={taskForm.technicianId ?? "none"} onValueChange={v => setTaskForm(f => ({ ...f, technicianId: v === "none" ? null : v }))}>
+                <SelectTrigger><SelectValue placeholder="Select technician..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {technicians.filter(t => t.active).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

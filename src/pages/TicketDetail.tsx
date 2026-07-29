@@ -51,7 +51,7 @@ export default function TicketDetail() {
   const [logForm, setLogForm] = useState({ author: "", message: "" });
   const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
-  const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0 });
+  const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0, technicianId: null as string | null });
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingBillableId, setEditingBillableId] = useState<string | null>(null);
 

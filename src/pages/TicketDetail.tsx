@@ -220,9 +220,16 @@ export default function TicketDetail() {
                           <Circle className="h-5 w-5 text-muted-foreground" />
                         )}
                       </button>
-                      <span className={`text-sm flex-1 ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                        {task.name}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-sm block truncate ${task.completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                          {task.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {task.technicianId
+                            ? technicians.find(tech => tech.id === task.technicianId)?.name ?? "Unknown technician"
+                            : "Unassigned"}
+                        </span>
+                      </div>
                       <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
                         <span className={task.actualTime > task.time ? "text-destructive font-medium" : "text-foreground"}>
                           {(task.actualTime ?? 0).toFixed(1)}

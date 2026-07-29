@@ -300,13 +300,16 @@ function loadData(): StoreData {
         ...t,
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
+        projectId: t.projectId ?? null,
         technicianIds: t.technicianIds ?? [],
         primaryTechnicianId: t.primaryTechnicianId ?? null,
-        tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0 })),
+        tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0, technicianId: tk.technicianId ?? null })),
         logs: t.logs ?? [],
         billableItems: t.billableItems ?? [],
         timeEntries: t.timeEntries ?? [],
       }));
+      // Migrate projects
+      parsed.projects = parsed.projects ?? defaultData.projects;
       // Migrate agreements
       parsed.agreements = parsed.agreements ?? [];
       // Migrate technicians

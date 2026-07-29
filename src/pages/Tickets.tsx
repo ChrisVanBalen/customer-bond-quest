@@ -84,13 +84,13 @@ export default function Tickets() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
+    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
     setDialogOpen(true);
   };
 
   const openEdit = (t: Ticket) => {
     setEditing(t);
-    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, priority: t.priority, status: t.status, technicianIds: t.technicianIds, primaryTechnicianId: t.primaryTechnicianId });
+    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, projectId: t.projectId, priority: t.priority, status: t.status, technicianIds: t.technicianIds, primaryTechnicianId: t.primaryTechnicianId });
     setDialogOpen(true);
   };
 

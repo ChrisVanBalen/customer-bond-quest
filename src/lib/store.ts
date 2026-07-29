@@ -166,6 +166,7 @@ interface StoreData {
   tickets: Ticket[];
   agreements: ServiceAgreement[];
   technicians: Technician[];
+  projects: Project[];
 }
 
 const STORAGE_KEY = "crm-psa-data";

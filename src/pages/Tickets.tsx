@@ -33,14 +33,14 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
 ];
 
 export default function Tickets() {
-  const { tickets, customers, assets, technicians, addTicket, updateTicket } = useStore();
+  const { tickets, customers, assets, technicians, projects, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [techFilter, setTechFilter] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
-    title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
+    title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, projectId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
     technicianIds: [] as string[], primaryTechnicianId: null as string | null,
   });
 

@@ -15,6 +15,8 @@ import TicketDetail from "./pages/TicketDetail";
 import Agreements from "./pages/Agreements";
 import AgreementDetail from "./pages/AgreementDetail";
 import Technicians from "./pages/Technicians";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

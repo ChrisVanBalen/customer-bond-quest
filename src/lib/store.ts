@@ -80,6 +80,7 @@ export interface TicketTask {
   time: number; // estimated hours
   actualTime: number; // actual hours
   completed: boolean;
+  technicianId: string | null;
 }
 
 export interface Technician {

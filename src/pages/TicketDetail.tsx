@@ -105,24 +105,24 @@ export default function TicketDetail() {
   const handleSaveTask = () => {
     if (!taskForm.name.trim() || taskForm.time <= 0) return;
     if (editingTaskId) {
-      updateTicketTask(ticket.id, editingTaskId, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime });
+      updateTicketTask(ticket.id, editingTaskId, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, technicianId: taskForm.technicianId });
     } else {
-      addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, completed: false });
+      addTicketTask(ticket.id, { name: taskForm.name, time: taskForm.time, actualTime: taskForm.actualTime, technicianId: taskForm.technicianId, completed: false });
     }
-    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setTaskForm({ name: "", time: 0, actualTime: 0, technicianId: null });
     setEditingTaskId(null);
     setTaskDialog(false);
   };
 
   const openAddTask = () => {
     setEditingTaskId(null);
-    setTaskForm({ name: "", time: 0, actualTime: 0 });
+    setTaskForm({ name: "", time: 0, actualTime: 0, technicianId: ticket.primaryTechnicianId ?? null });
     setTaskDialog(true);
   };
 
-  const openEditTask = (task: { id: string; name: string; time: number; actualTime: number }) => {
+  const openEditTask = (task: { id: string; name: string; time: number; actualTime: number; technicianId?: string | null }) => {
     setEditingTaskId(task.id);
-    setTaskForm({ name: task.name, time: task.time, actualTime: task.actualTime ?? 0 });
+    setTaskForm({ name: task.name, time: task.time, actualTime: task.actualTime ?? 0, technicianId: task.technicianId ?? null });
     setTaskDialog(true);
   };
 

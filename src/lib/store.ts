@@ -100,6 +100,7 @@ export interface Ticket {
   customerId: string;
   locationId: string | null;
   assetId: string | null;
+  projectId: string | null;
   priority: TicketPriority;
   status: TicketStatus;
   technicianIds: string[];
@@ -111,6 +112,22 @@ export interface Ticket {
   billableItems: BillableItem[];
   timeEntries: TimeEntry[];
 }
+
+export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  customerId: string;
+  status: ProjectStatus;
+  startDate: string;
+  targetDate: string;
+  managerId: string | null; // technician leading the project
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled";
 

@@ -340,6 +340,22 @@ export default function Tickets() {
               </Select>
             </div>
             <div className="grid gap-1.5">
+              <Label>Project</Label>
+              <Select value={form.projectId ?? "none"} onValueChange={v => setForm(f => ({ ...f, projectId: v === "none" ? null : v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select project (optional)..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No project</SelectItem>
+                  {projects
+                    .filter(p => !form.customerId || p.customerId === form.customerId)
+                    .map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
               <Label>Technicians</Label>
               {activeTechnicians.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No active technicians. Add one from the Technicians page.</p>

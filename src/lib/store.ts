@@ -639,11 +639,36 @@ export function useStore() {
     setData(prev => ({
       ...prev,
       technicians: prev.technicians.filter(t => t.id !== id),
+      projects: prev.projects.map(p => p.managerId === id ? { ...p, managerId: null } : p),
       tickets: prev.tickets.map(t => ({
         ...t,
         technicianIds: t.technicianIds.filter(tid => tid !== id),
         primaryTechnicianId: t.primaryTechnicianId === id ? null : t.primaryTechnicianId,
+        tasks: t.tasks.map(tk => tk.technicianId === id ? { ...tk, technicianId: null } : tk),
       })),
+    }));
+  }, []);
+
+  const addProject = useCallback((p: Omit<Project, "id" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => ({
+      ...prev,
+      projects: [...prev.projects, { ...p, id: crypto.randomUUID(), createdAt: now, updatedAt: now }],
+    }));
+  }, []);
+
+  const updateProject = useCallback((id: string, updates: Partial<Project>) => {
+    setData(prev => ({
+      ...prev,
+      projects: prev.projects.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString().split("T")[0] } : p),
+    }));
+  }, []);
+
+  const deleteProject = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      projects: prev.projects.filter(p => p.id !== id),
+      tickets: prev.tickets.map(t => t.projectId === id ? { ...t, projectId: null } : t),
     }));
   }, []);
 
@@ -657,5 +682,6 @@ export function useStore() {
     addTicketTask, toggleTicketTask, updateTicketTask, deleteTicketTask,
     addAgreement, updateAgreement, deleteAgreement,
     addTechnician, updateTechnician, deleteTechnician,
+    addProject, updateProject, deleteProject,
   };
 }

@@ -36,13 +36,29 @@ export default function Tickets() {
   const { tickets, customers, assets, technicians, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
-  const [techFilter, setTechFilter] = useState<string>("all");
+  const [techFilter, setTechFilter] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
     technicianIds: [] as string[], primaryTechnicianId: null as string | null,
   });
+
+  const toggleTechFilter = (value: string) => {
+    setTechFilter(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+
+  const techFilterLabel = (() => {
+    if (techFilter.length === 0) return "All Technicians";
+    if (techFilter.length === 1) {
+      const v = techFilter[0];
+      if (v === "unassigned") return "Unassigned";
+      return technicians.find(t => t.id === v)?.name ?? "1 technician";
+    }
+    return `${techFilter.length} technicians`;
+  })();
 
   const toggleStatusFilter = (status: TicketStatus) => {
     setStatusFilter(prev =>
@@ -53,11 +69,9 @@ export default function Tickets() {
   const filtered = tickets.filter(t => {
     const matchSearch = [t.title, t.description].some(f => f.toLowerCase().includes(search.toLowerCase()));
     const matchStatus = statusFilter.length === 0 || statusFilter.includes(t.status);
-    const matchTech = techFilter === "all"
-      ? true
-      : techFilter === "unassigned"
-        ? t.technicianIds.length === 0
-        : t.technicianIds.includes(techFilter);
+    const matchTech = techFilter.length === 0 || techFilter.some(v =>
+      v === "unassigned" ? t.technicianIds.length === 0 : t.technicianIds.includes(v)
+    );
     return matchSearch && matchStatus && matchTech;
   });
 
@@ -150,18 +164,45 @@ export default function Tickets() {
             )}
           </PopoverContent>
         </Popover>
-        <Select value={techFilter} onValueChange={setTechFilter}>
-          <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="All Technicians" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Technicians</SelectItem>
-            <SelectItem value="unassigned">Unassigned</SelectItem>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[220px] justify-between">
+              {techFilterLabel}
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[220px] p-2" align="start">
+            <label className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent">
+              <Checkbox
+                checked={techFilter.includes("unassigned")}
+                onCheckedChange={() => toggleTechFilter("unassigned")}
+              />
+              Unassigned
+            </label>
             {technicians.map(t => (
-              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+              <label
+                key={t.id}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover:bg-accent"
+              >
+                <Checkbox
+                  checked={techFilter.includes(t.id)}
+                  onCheckedChange={() => toggleTechFilter(t.id)}
+                />
+                {t.name}
+              </label>
             ))}
-          </SelectContent>
-        </Select>
+            {techFilter.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-1 text-xs"
+                onClick={() => setTechFilter([])}
+              >
+                Clear filters
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">

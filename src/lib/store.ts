@@ -232,6 +232,36 @@ export function advanceDate(date: string, frequency: ScheduleFrequency): string 
 const STORAGE_KEY = "crm-psa-data";
 
 const defaultData: StoreData = {
+  ticketTemplates: [
+    {
+      id: "tpl1", name: "Quarterly Maintenance", title: "Quarterly preventive maintenance",
+      description: "Standard quarterly onsite maintenance visit.", priority: "medium",
+      tasks: [
+        { id: "tt1", name: "Inspect network hardware", time: 1 },
+        { id: "tt2", name: "Apply firmware/OS updates", time: 2 },
+        { id: "tt3", name: "Verify backups", time: 1 },
+      ],
+      createdAt: "2025-01-05", updatedAt: "2025-01-05",
+    },
+    {
+      id: "tpl2", name: "New Workstation Setup", title: "Workstation deployment",
+      description: "Provision and deploy a new workstation for a user.", priority: "medium",
+      tasks: [
+        { id: "tt4", name: "Image machine", time: 1.5 },
+        { id: "tt5", name: "Install standard software", time: 1 },
+        { id: "tt6", name: "User handoff & orientation", time: 0.5 },
+      ],
+      createdAt: "2025-01-10", updatedAt: "2025-01-10",
+    },
+  ],
+  scheduledTickets: [
+    {
+      id: "sch1", name: "Meridian quarterly maintenance", templateId: "tpl1", customerId: "c1", locationId: null,
+      frequency: "quarterly", nextRunDate: "2025-07-01", lastRunDate: "2025-04-01",
+      technicianIds: ["tech1"], primaryTechnicianId: "tech1", active: true, createdAt: "2025-01-05",
+    },
+  ],
+
   technicians: [
     { id: "tech1", name: "Alex Rivera", email: "alex@commandhub.com", phone: "(555) 111-2233", role: "Senior Technician", active: true, createdAt: "2024-10-01" },
     { id: "tech2", name: "Jordan Chen", email: "jordan@commandhub.com", phone: "(555) 222-3344", role: "Field Engineer", active: true, createdAt: "2024-10-15" },

@@ -404,6 +404,16 @@ function loadData(): StoreData {
       parsed.agreements = parsed.agreements ?? [];
       // Migrate technicians
       parsed.technicians = parsed.technicians ?? defaultData.technicians;
+      // Migrate ticket templates & scheduled tickets
+      parsed.ticketTemplates = parsed.ticketTemplates ?? defaultData.ticketTemplates;
+      parsed.scheduledTickets = (parsed.scheduledTickets ?? defaultData.scheduledTickets).map((s: any) => ({
+        ...s,
+        technicianIds: s.technicianIds ?? [],
+        primaryTechnicianId: s.primaryTechnicianId ?? null,
+        lastRunDate: s.lastRunDate ?? null,
+        locationId: s.locationId ?? null,
+      }));
+
       // Migrate customers to have locations
       parsed.customers = parsed.customers.map((c: any) => ({
         ...c,

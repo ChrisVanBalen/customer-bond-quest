@@ -772,6 +772,118 @@ export function useStore() {
     }));
   }, []);
 
+  const addTicketTemplate = useCallback((t: Omit<TicketTemplate, "id" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => ({
+      ...prev,
+      ticketTemplates: [...prev.ticketTemplates, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now }],
+    }));
+  }, []);
+
+  const updateTicketTemplate = useCallback((id: string, updates: Partial<TicketTemplate>) => {
+    setData(prev => ({
+      ...prev,
+      ticketTemplates: prev.ticketTemplates.map(t => t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString().split("T")[0] } : t),
+    }));
+  }, []);
+
+  const deleteTicketTemplate = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      ticketTemplates: prev.ticketTemplates.filter(t => t.id !== id),
+      scheduledTickets: prev.scheduledTickets.map(s => s.templateId === id ? { ...s, templateId: null } : s),
+    }));
+  }, []);
+
+  const addScheduledTicket = useCallback((s: Omit<ScheduledTicket, "id" | "createdAt" | "lastRunDate">) => {
+    setData(prev => ({
+      ...prev,
+      scheduledTickets: [...prev.scheduledTickets, { ...s, id: crypto.randomUUID(), lastRunDate: null, createdAt: new Date().toISOString().split("T")[0] }],
+    }));
+  }, []);
+
+  const updateScheduledTicket = useCallback((id: string, updates: Partial<ScheduledTicket>) => {
+    setData(prev => ({
+      ...prev,
+      scheduledTickets: prev.scheduledTickets.map(s => s.id === id ? { ...s, ...updates } : s),
+    }));
+  }, []);
+
+  const deleteScheduledTicket = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      scheduledTickets: prev.scheduledTickets.filter(s => s.id !== id),
+    }));
+  }, []);
+
+  /** Creates a ticket from a template. Returns nothing; ticket appears in the list. */
+  const createTicketFromTemplate = useCallback((templateId: string, overrides: {
+    customerId: string; locationId?: string | null; projectId?: string | null;
+    technicianIds?: string[]; primaryTechnicianId?: string | null; titleSuffix?: string;
+  }) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => {
+      const tpl = prev.ticketTemplates.find(t => t.id === templateId);
+      if (!tpl) return prev;
+      const ticket: Ticket = {
+        id: crypto.randomUUID(),
+        title: overrides.titleSuffix ? `${tpl.title} — ${overrides.titleSuffix}` : tpl.title,
+        description: tpl.description,
+        customerId: overrides.customerId,
+        locationId: overrides.locationId ?? null,
+        assetId: null,
+        projectId: overrides.projectId ?? null,
+        priority: tpl.priority,
+        status: "open",
+        technicianIds: overrides.technicianIds ?? [],
+        primaryTechnicianId: overrides.primaryTechnicianId ?? null,
+        createdAt: now,
+        updatedAt: now,
+        tasks: tpl.tasks.map(t => ({ id: crypto.randomUUID(), name: t.name, time: t.time, actualTime: 0, completed: false, technicianId: null })),
+        logs: [],
+        billableItems: [],
+        timeEntries: [],
+      };
+      return { ...prev, tickets: [...prev.tickets, ticket] };
+    });
+  }, []);
+
+  /** Generates the ticket for a schedule now and advances its next run date. */
+  const runScheduledTicket = useCallback((scheduleId: string) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => {
+      const sch = prev.scheduledTickets.find(s => s.id === scheduleId);
+      if (!sch) return prev;
+      const tpl = sch.templateId ? prev.ticketTemplates.find(t => t.id === sch.templateId) : null;
+      const ticket: Ticket = {
+        id: crypto.randomUUID(),
+        title: tpl ? `${tpl.title} — ${sch.nextRunDate}` : `${sch.name} — ${sch.nextRunDate}`,
+        description: tpl?.description ?? "",
+        customerId: sch.customerId,
+        locationId: sch.locationId,
+        assetId: null,
+        projectId: null,
+        priority: tpl?.priority ?? "medium",
+        status: "open",
+        technicianIds: sch.technicianIds,
+        primaryTechnicianId: sch.primaryTechnicianId,
+        createdAt: now,
+        updatedAt: now,
+        tasks: (tpl?.tasks ?? []).map(t => ({ id: crypto.randomUUID(), name: t.name, time: t.time, actualTime: 0, completed: false, technicianId: null })),
+        logs: [],
+        billableItems: [],
+        timeEntries: [],
+      };
+      return {
+        ...prev,
+        tickets: [...prev.tickets, ticket],
+        scheduledTickets: prev.scheduledTickets.map(s => s.id === scheduleId
+          ? { ...s, lastRunDate: now, nextRunDate: advanceDate(s.nextRunDate, s.frequency) }
+          : s),
+      };
+    });
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
@@ -783,5 +895,9 @@ export function useStore() {
     addAgreement, updateAgreement, deleteAgreement,
     addTechnician, updateTechnician, deleteTechnician,
     addProject, updateProject, deleteProject,
+    addTicketTemplate, updateTicketTemplate, deleteTicketTemplate,
+    addScheduledTicket, updateScheduledTicket, deleteScheduledTicket,
+    createTicketFromTemplate, runScheduledTicket,
   };
+
 }

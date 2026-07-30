@@ -161,6 +161,40 @@ export interface ServiceAgreement {
   updatedAt: string;
 }
 
+export interface TicketTemplateTask {
+  id: string;
+  name: string;
+  time: number; // estimated hours
+}
+
+export interface TicketTemplate {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  priority: TicketPriority;
+  tasks: TicketTemplateTask[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ScheduleFrequency = "weekly" | "biweekly" | "monthly" | "quarterly" | "semiannual" | "annual";
+
+export interface ScheduledTicket {
+  id: string;
+  name: string;
+  templateId: string | null;
+  customerId: string;
+  locationId: string | null;
+  frequency: ScheduleFrequency;
+  nextRunDate: string;
+  lastRunDate: string | null;
+  technicianIds: string[];
+  primaryTechnicianId: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
 interface StoreData {
   customers: Customer[];
   assets: Asset[];
@@ -168,7 +202,32 @@ interface StoreData {
   agreements: ServiceAgreement[];
   technicians: Technician[];
   projects: Project[];
+  ticketTemplates: TicketTemplate[];
+  scheduledTickets: ScheduledTicket[];
 }
+
+export const FREQUENCY_LABELS: Record<ScheduleFrequency, string> = {
+  weekly: "Weekly",
+  biweekly: "Every 2 weeks",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  semiannual: "Every 6 months",
+  annual: "Annually",
+};
+
+export function advanceDate(date: string, frequency: ScheduleFrequency): string {
+  const d = new Date(date + "T00:00:00");
+  switch (frequency) {
+    case "weekly": d.setDate(d.getDate() + 7); break;
+    case "biweekly": d.setDate(d.getDate() + 14); break;
+    case "monthly": d.setMonth(d.getMonth() + 1); break;
+    case "quarterly": d.setMonth(d.getMonth() + 3); break;
+    case "semiannual": d.setMonth(d.getMonth() + 6); break;
+    case "annual": d.setFullYear(d.getFullYear() + 1); break;
+  }
+  return d.toISOString().split("T")[0];
+}
+
 
 const STORAGE_KEY = "crm-psa-data";
 

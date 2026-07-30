@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -13,13 +15,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Building2, CalendarDays, UserCircle2, Plus, X } from "lucide-react";
+import { ArrowLeft, Building2, CalendarDays, UserCircle2, Plus, X, TicketPlus } from "lucide-react";
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const { projects, customers, technicians, tickets, updateProject, updateTicket } = useStore();
+  const { projects, customers, technicians, tickets, updateProject, updateTicket, addTicket } = useStore();
   const [linkDialog, setLinkDialog] = useState(false);
   const [ticketToLink, setTicketToLink] = useState<string>("");
+  const [newDialog, setNewDialog] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    priority: "medium" as "low" | "medium" | "high" | "critical",
+    technicianId: "none",
+  });
 
   const project = projects.find(p => p.id === id);
 
@@ -38,6 +47,25 @@ export default function ProjectDetail() {
   const completed = projectTickets.filter(t => t.status === "closed").length;
   const pct = projectTickets.length ? Math.round((completed / projectTickets.length) * 100) : 0;
   const linkable = tickets.filter(t => !t.projectId && t.customerId === project.customerId);
+
+  const handleCreateTicket = () => {
+    if (!form.title.trim()) return;
+    const tech = form.technicianId === "none" ? null : form.technicianId;
+    addTicket({
+      title: form.title.trim(),
+      description: form.description,
+      customerId: project.customerId,
+      locationId: null,
+      assetId: null,
+      projectId: project.id,
+      priority: form.priority,
+      status: "open",
+      technicianIds: tech ? [tech] : [],
+      primaryTechnicianId: tech,
+    });
+    setNewDialog(false);
+  };
+
 
   return (
     <div className="animate-fade-in">
@@ -67,9 +95,14 @@ export default function ProjectDetail() {
                 <h2 className="font-semibold text-foreground">Project Tickets</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">{completed} of {projectTickets.length} complete</p>
               </div>
-              <Button size="sm" onClick={() => { setTicketToLink(""); setLinkDialog(true); }}>
-                <Plus className="h-4 w-4 mr-1.5" />Link Ticket
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => { setTicketToLink(""); setLinkDialog(true); }}>
+                  <Plus className="h-4 w-4 mr-1.5" />Link Ticket
+                </Button>
+                <Button size="sm" onClick={() => { setForm({ title: "", description: "", priority: "medium", technicianId: "none" }); setNewDialog(true); }}>
+                  <TicketPlus className="h-4 w-4 mr-1.5" />New Ticket
+                </Button>
+              </div>
             </div>
             <div className="px-5 pt-4">
               <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -161,6 +194,50 @@ export default function ProjectDetail() {
             >
               Link Ticket
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={newDialog} onOpenChange={setNewDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>New Ticket for {project.name}</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-1.5">
+              <Label>Title</Label>
+              <Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Ticket title" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Description</Label>
+              <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Priority</Label>
+                <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v as typeof form.priority })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(["low", "medium", "high", "critical"] as const).map(p => (
+                      <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Primary Technician</Label>
+                <Select value={form.technicianId} onValueChange={v => setForm({ ...form, technicianId: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Unassigned</SelectItem>
+                    {technicians.filter(t => t.active).map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Customer: {customer?.name ?? "—"}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewDialog(false)}>Cancel</Button>
+            <Button disabled={!form.title.trim()} onClick={handleCreateTicket}>Create Ticket</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -13,13 +15,20 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Building2, CalendarDays, UserCircle2, Plus, X } from "lucide-react";
+import { ArrowLeft, Building2, CalendarDays, UserCircle2, Plus, X, TicketPlus } from "lucide-react";
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const { projects, customers, technicians, tickets, updateProject, updateTicket } = useStore();
+  const { projects, customers, technicians, tickets, updateProject, updateTicket, addTicket } = useStore();
   const [linkDialog, setLinkDialog] = useState(false);
   const [ticketToLink, setTicketToLink] = useState<string>("");
+  const [newDialog, setNewDialog] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    priority: "medium" as "low" | "medium" | "high" | "urgent",
+    technicianId: "none",
+  });
 
   const project = projects.find(p => p.id === id);
 
@@ -38,6 +47,25 @@ export default function ProjectDetail() {
   const completed = projectTickets.filter(t => t.status === "closed").length;
   const pct = projectTickets.length ? Math.round((completed / projectTickets.length) * 100) : 0;
   const linkable = tickets.filter(t => !t.projectId && t.customerId === project.customerId);
+
+  const handleCreateTicket = () => {
+    if (!form.title.trim()) return;
+    const tech = form.technicianId === "none" ? null : form.technicianId;
+    addTicket({
+      title: form.title.trim(),
+      description: form.description,
+      customerId: project.customerId,
+      locationId: null,
+      assetId: null,
+      projectId: project.id,
+      priority: form.priority,
+      status: "open",
+      technicianIds: tech ? [tech] : [],
+      primaryTechnicianId: tech,
+    });
+    setNewDialog(false);
+  };
+
 
   return (
     <div className="animate-fade-in">

@@ -50,7 +50,7 @@ export default function TicketDetail() {
   const [taskDialog, setTaskDialog] = useState(false);
 
   const [logForm, setLogForm] = useState({ author: "", message: "" });
-  const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+  const [billableForm, setBillableForm] = useState({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0, technicianId: null as string | null });
   const [timeForm, setTimeForm] = useState({ date: new Date().toISOString().split("T")[0], technician: "", hours: 0, description: "" });
   const [taskForm, setTaskForm] = useState({ name: "", time: 0, actualTime: 0, technicianId: null as string | null });
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -79,20 +79,20 @@ export default function TicketDetail() {
     } else {
       addBillableItem(ticket.id, billableForm);
     }
-    setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+    setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0, technicianId: null });
     setEditingBillableId(null);
     setBillableDialog(false);
   };
 
   const openAddBillable = () => {
     setEditingBillableId(null);
-    setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0 });
+    setBillableForm({ date: new Date().toISOString().split("T")[0], description: "", quantity: 1, unitPrice: 0, technicianId: null });
     setBillableDialog(true);
   };
 
-  const openEditBillable = (item: { id: string; date: string; description: string; quantity: number; unitPrice: number }) => {
+  const openEditBillable = (item: { id: string; date: string; description: string; quantity: number; unitPrice: number; technicianId: string | null }) => {
     setEditingBillableId(item.id);
-    setBillableForm({ date: item.date, description: item.description, quantity: item.quantity, unitPrice: item.unitPrice });
+    setBillableForm({ date: item.date, description: item.description, quantity: item.quantity, unitPrice: item.unitPrice, technicianId: item.technicianId ?? null });
     setBillableDialog(true);
   };
 
@@ -348,6 +348,7 @@ export default function TicketDetail() {
                     <tr className="border-b">
                       <th className="text-left font-medium text-muted-foreground pb-2">Date</th>
                       <th className="text-left font-medium text-muted-foreground pb-2">Description</th>
+                      <th className="text-left font-medium text-muted-foreground pb-2">Technician</th>
                       <th className="text-right font-medium text-muted-foreground pb-2">Qty</th>
                       <th className="text-right font-medium text-muted-foreground pb-2">Price</th>
                       <th className="text-right font-medium text-muted-foreground pb-2">Total</th>
@@ -359,6 +360,7 @@ export default function TicketDetail() {
                       <tr key={item.id} className="group">
                         <td className="py-2 text-muted-foreground">{item.date}</td>
                         <td className="py-2 text-foreground">{item.description}</td>
+                        <td className="py-2 text-muted-foreground">{technicians.find(t => t.id === item.technicianId)?.name ?? "—"}</td>
                         <td className="py-2 text-right tabular-nums">{item.quantity}</td>
                         <td className="py-2 text-right tabular-nums">${item.unitPrice.toFixed(2)}</td>
                         <td className="py-2 text-right tabular-nums font-medium">${(item.quantity * item.unitPrice).toFixed(2)}</td>
@@ -575,6 +577,18 @@ export default function TicketDetail() {
             <div className="grid gap-1.5">
               <Label>Description</Label>
               <Input value={billableForm.description} onChange={e => setBillableForm(f => ({ ...f, description: e.target.value }))} placeholder="Item description" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Technician</Label>
+              <Select value={billableForm.technicianId ?? "none"} onValueChange={v => setBillableForm(f => ({ ...f, technicianId: v === "none" ? null : v }))}>
+                <SelectTrigger><SelectValue placeholder="Select technician" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {technicians.filter(t => t.active).map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">

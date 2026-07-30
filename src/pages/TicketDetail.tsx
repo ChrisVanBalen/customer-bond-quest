@@ -605,7 +605,14 @@ export default function TicketDetail() {
             </div>
             <div className="grid gap-1.5">
               <Label>Technician</Label>
-              <Input value={timeForm.technician} onChange={e => setTimeForm(f => ({ ...f, technician: e.target.value }))} placeholder="Technician name" />
+              <Select value={timeForm.technician} onValueChange={v => setTimeForm(f => ({ ...f, technician: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select technician" /></SelectTrigger>
+                <SelectContent>
+                  {technicians.filter(t => t.active).map(t => (
+                    <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-1.5">
               <Label>Hours</Label>

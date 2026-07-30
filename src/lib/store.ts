@@ -161,6 +161,40 @@ export interface ServiceAgreement {
   updatedAt: string;
 }
 
+export interface TicketTemplateTask {
+  id: string;
+  name: string;
+  time: number; // estimated hours
+}
+
+export interface TicketTemplate {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  priority: TicketPriority;
+  tasks: TicketTemplateTask[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ScheduleFrequency = "weekly" | "biweekly" | "monthly" | "quarterly" | "semiannual" | "annual";
+
+export interface ScheduledTicket {
+  id: string;
+  name: string;
+  templateId: string | null;
+  customerId: string;
+  locationId: string | null;
+  frequency: ScheduleFrequency;
+  nextRunDate: string;
+  lastRunDate: string | null;
+  technicianIds: string[];
+  primaryTechnicianId: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
 interface StoreData {
   customers: Customer[];
   assets: Asset[];
@@ -168,11 +202,66 @@ interface StoreData {
   agreements: ServiceAgreement[];
   technicians: Technician[];
   projects: Project[];
+  ticketTemplates: TicketTemplate[];
+  scheduledTickets: ScheduledTicket[];
 }
+
+export const FREQUENCY_LABELS: Record<ScheduleFrequency, string> = {
+  weekly: "Weekly",
+  biweekly: "Every 2 weeks",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  semiannual: "Every 6 months",
+  annual: "Annually",
+};
+
+export function advanceDate(date: string, frequency: ScheduleFrequency): string {
+  const d = new Date(date + "T00:00:00");
+  switch (frequency) {
+    case "weekly": d.setDate(d.getDate() + 7); break;
+    case "biweekly": d.setDate(d.getDate() + 14); break;
+    case "monthly": d.setMonth(d.getMonth() + 1); break;
+    case "quarterly": d.setMonth(d.getMonth() + 3); break;
+    case "semiannual": d.setMonth(d.getMonth() + 6); break;
+    case "annual": d.setFullYear(d.getFullYear() + 1); break;
+  }
+  return d.toISOString().split("T")[0];
+}
+
 
 const STORAGE_KEY = "crm-psa-data";
 
 const defaultData: StoreData = {
+  ticketTemplates: [
+    {
+      id: "tpl1", name: "Quarterly Maintenance", title: "Quarterly preventive maintenance",
+      description: "Standard quarterly onsite maintenance visit.", priority: "medium",
+      tasks: [
+        { id: "tt1", name: "Inspect network hardware", time: 1 },
+        { id: "tt2", name: "Apply firmware/OS updates", time: 2 },
+        { id: "tt3", name: "Verify backups", time: 1 },
+      ],
+      createdAt: "2025-01-05", updatedAt: "2025-01-05",
+    },
+    {
+      id: "tpl2", name: "New Workstation Setup", title: "Workstation deployment",
+      description: "Provision and deploy a new workstation for a user.", priority: "medium",
+      tasks: [
+        { id: "tt4", name: "Image machine", time: 1.5 },
+        { id: "tt5", name: "Install standard software", time: 1 },
+        { id: "tt6", name: "User handoff & orientation", time: 0.5 },
+      ],
+      createdAt: "2025-01-10", updatedAt: "2025-01-10",
+    },
+  ],
+  scheduledTickets: [
+    {
+      id: "sch1", name: "Meridian quarterly maintenance", templateId: "tpl1", customerId: "c1", locationId: null,
+      frequency: "quarterly", nextRunDate: "2025-07-01", lastRunDate: "2025-04-01",
+      technicianIds: ["tech1"], primaryTechnicianId: "tech1", active: true, createdAt: "2025-01-05",
+    },
+  ],
+
   technicians: [
     { id: "tech1", name: "Alex Rivera", email: "alex@commandhub.com", phone: "(555) 111-2233", role: "Senior Technician", active: true, createdAt: "2024-10-01" },
     { id: "tech2", name: "Jordan Chen", email: "jordan@commandhub.com", phone: "(555) 222-3344", role: "Field Engineer", active: true, createdAt: "2024-10-15" },
@@ -315,6 +404,16 @@ function loadData(): StoreData {
       parsed.agreements = parsed.agreements ?? [];
       // Migrate technicians
       parsed.technicians = parsed.technicians ?? defaultData.technicians;
+      // Migrate ticket templates & scheduled tickets
+      parsed.ticketTemplates = parsed.ticketTemplates ?? defaultData.ticketTemplates;
+      parsed.scheduledTickets = (parsed.scheduledTickets ?? defaultData.scheduledTickets).map((s: any) => ({
+        ...s,
+        technicianIds: s.technicianIds ?? [],
+        primaryTechnicianId: s.primaryTechnicianId ?? null,
+        lastRunDate: s.lastRunDate ?? null,
+        locationId: s.locationId ?? null,
+      }));
+
       // Migrate customers to have locations
       parsed.customers = parsed.customers.map((c: any) => ({
         ...c,
@@ -673,6 +772,118 @@ export function useStore() {
     }));
   }, []);
 
+  const addTicketTemplate = useCallback((t: Omit<TicketTemplate, "id" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => ({
+      ...prev,
+      ticketTemplates: [...prev.ticketTemplates, { ...t, id: crypto.randomUUID(), createdAt: now, updatedAt: now }],
+    }));
+  }, []);
+
+  const updateTicketTemplate = useCallback((id: string, updates: Partial<TicketTemplate>) => {
+    setData(prev => ({
+      ...prev,
+      ticketTemplates: prev.ticketTemplates.map(t => t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString().split("T")[0] } : t),
+    }));
+  }, []);
+
+  const deleteTicketTemplate = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      ticketTemplates: prev.ticketTemplates.filter(t => t.id !== id),
+      scheduledTickets: prev.scheduledTickets.map(s => s.templateId === id ? { ...s, templateId: null } : s),
+    }));
+  }, []);
+
+  const addScheduledTicket = useCallback((s: Omit<ScheduledTicket, "id" | "createdAt" | "lastRunDate">) => {
+    setData(prev => ({
+      ...prev,
+      scheduledTickets: [...prev.scheduledTickets, { ...s, id: crypto.randomUUID(), lastRunDate: null, createdAt: new Date().toISOString().split("T")[0] }],
+    }));
+  }, []);
+
+  const updateScheduledTicket = useCallback((id: string, updates: Partial<ScheduledTicket>) => {
+    setData(prev => ({
+      ...prev,
+      scheduledTickets: prev.scheduledTickets.map(s => s.id === id ? { ...s, ...updates } : s),
+    }));
+  }, []);
+
+  const deleteScheduledTicket = useCallback((id: string) => {
+    setData(prev => ({
+      ...prev,
+      scheduledTickets: prev.scheduledTickets.filter(s => s.id !== id),
+    }));
+  }, []);
+
+  /** Creates a ticket from a template. Returns nothing; ticket appears in the list. */
+  const createTicketFromTemplate = useCallback((templateId: string, overrides: {
+    customerId: string; locationId?: string | null; projectId?: string | null;
+    technicianIds?: string[]; primaryTechnicianId?: string | null; titleSuffix?: string;
+  }) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => {
+      const tpl = prev.ticketTemplates.find(t => t.id === templateId);
+      if (!tpl) return prev;
+      const ticket: Ticket = {
+        id: crypto.randomUUID(),
+        title: overrides.titleSuffix ? `${tpl.title} — ${overrides.titleSuffix}` : tpl.title,
+        description: tpl.description,
+        customerId: overrides.customerId,
+        locationId: overrides.locationId ?? null,
+        assetId: null,
+        projectId: overrides.projectId ?? null,
+        priority: tpl.priority,
+        status: "open",
+        technicianIds: overrides.technicianIds ?? [],
+        primaryTechnicianId: overrides.primaryTechnicianId ?? null,
+        createdAt: now,
+        updatedAt: now,
+        tasks: tpl.tasks.map(t => ({ id: crypto.randomUUID(), name: t.name, time: t.time, actualTime: 0, completed: false, technicianId: null })),
+        logs: [],
+        billableItems: [],
+        timeEntries: [],
+      };
+      return { ...prev, tickets: [...prev.tickets, ticket] };
+    });
+  }, []);
+
+  /** Generates the ticket for a schedule now and advances its next run date. */
+  const runScheduledTicket = useCallback((scheduleId: string) => {
+    const now = new Date().toISOString().split("T")[0];
+    setData(prev => {
+      const sch = prev.scheduledTickets.find(s => s.id === scheduleId);
+      if (!sch) return prev;
+      const tpl = sch.templateId ? prev.ticketTemplates.find(t => t.id === sch.templateId) : null;
+      const ticket: Ticket = {
+        id: crypto.randomUUID(),
+        title: tpl ? `${tpl.title} — ${sch.nextRunDate}` : `${sch.name} — ${sch.nextRunDate}`,
+        description: tpl?.description ?? "",
+        customerId: sch.customerId,
+        locationId: sch.locationId,
+        assetId: null,
+        projectId: null,
+        priority: tpl?.priority ?? "medium",
+        status: "open",
+        technicianIds: sch.technicianIds,
+        primaryTechnicianId: sch.primaryTechnicianId,
+        createdAt: now,
+        updatedAt: now,
+        tasks: (tpl?.tasks ?? []).map(t => ({ id: crypto.randomUUID(), name: t.name, time: t.time, actualTime: 0, completed: false, technicianId: null })),
+        logs: [],
+        billableItems: [],
+        timeEntries: [],
+      };
+      return {
+        ...prev,
+        tickets: [...prev.tickets, ticket],
+        scheduledTickets: prev.scheduledTickets.map(s => s.id === scheduleId
+          ? { ...s, lastRunDate: now, nextRunDate: advanceDate(s.nextRunDate, s.frequency) }
+          : s),
+      };
+    });
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
@@ -684,5 +895,9 @@ export function useStore() {
     addAgreement, updateAgreement, deleteAgreement,
     addTechnician, updateTechnician, deleteTechnician,
     addProject, updateProject, deleteProject,
+    addTicketTemplate, updateTicketTemplate, deleteTicketTemplate,
+    addScheduledTicket, updateScheduledTicket, deleteScheduledTicket,
+    createTicketFromTemplate, runScheduledTicket,
   };
+
 }

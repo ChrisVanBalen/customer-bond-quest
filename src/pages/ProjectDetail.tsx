@@ -95,9 +95,14 @@ export default function ProjectDetail() {
                 <h2 className="font-semibold text-foreground">Project Tickets</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">{completed} of {projectTickets.length} complete</p>
               </div>
-              <Button size="sm" onClick={() => { setTicketToLink(""); setLinkDialog(true); }}>
-                <Plus className="h-4 w-4 mr-1.5" />Link Ticket
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => { setTicketToLink(""); setLinkDialog(true); }}>
+                  <Plus className="h-4 w-4 mr-1.5" />Link Ticket
+                </Button>
+                <Button size="sm" onClick={() => { setForm({ title: "", description: "", priority: "medium", technicianId: "none" }); setNewDialog(true); }}>
+                  <TicketPlus className="h-4 w-4 mr-1.5" />New Ticket
+                </Button>
+              </div>
             </div>
             <div className="px-5 pt-4">
               <div className="h-2 rounded-full bg-muted overflow-hidden">

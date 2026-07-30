@@ -64,6 +64,7 @@ export interface BillableItem {
   description: string;
   quantity: number;
   unitPrice: number;
+  technicianId: string | null;
 }
 
 export interface TimeEntry {
@@ -305,7 +306,7 @@ function loadData(): StoreData {
         primaryTechnicianId: t.primaryTechnicianId ?? null,
         tasks: (t.tasks ?? []).map((tk: any) => ({ ...tk, actualTime: tk.actualTime ?? 0, technicianId: tk.technicianId ?? null })),
         logs: t.logs ?? [],
-        billableItems: t.billableItems ?? [],
+        billableItems: (t.billableItems ?? []).map((b: any) => ({ ...b, technicianId: b.technicianId ?? null })),
         timeEntries: t.timeEntries ?? [],
       }));
       // Migrate projects

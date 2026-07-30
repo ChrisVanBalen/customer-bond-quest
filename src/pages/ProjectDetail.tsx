@@ -26,7 +26,7 @@ export default function ProjectDetail() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    priority: "medium" as "low" | "medium" | "high" | "urgent",
+    priority: "medium" as "low" | "medium" | "high" | "critical",
     technicianId: "none",
   });
 

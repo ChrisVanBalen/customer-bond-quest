@@ -203,6 +203,12 @@ export default function TicketTemplates() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreateFromTemplateDialog
+        open={createFrom !== null}
+        onOpenChange={v => !v && setCreateFrom(null)}
+        templateId={createFrom ?? undefined}
+      />
     </div>
   );
 }

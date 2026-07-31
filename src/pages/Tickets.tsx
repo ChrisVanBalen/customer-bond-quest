@@ -22,7 +22,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Package, MapPin, ChevronDown, Star, UserCircle2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CreateFromTemplateDialog } from "@/components/CreateFromTemplateDialog";
+import { Plus, Search, Pencil, Package, MapPin, ChevronDown, Star, UserCircle2, FilePlus2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [

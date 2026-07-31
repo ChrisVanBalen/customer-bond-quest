@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useStore, CustomerLocation } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
+import { AssetLifeBar } from "@/components/AssetLifeBar";
+import { getAssetLife, stageMeta } from "@/lib/assetLife";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +55,10 @@ export default function CustomerDetail() {
   }
 
   const customerAssets = assets.filter(a => a.assignedTo === customer.id);
+  const lifeStats = (["expired", "nearing", "aging", "healthy", "unknown"] as const).map(stage => ({
+    stage,
+    count: customerAssets.filter(a => getAssetLife(a).stage === stage).length,
+  })).filter(s => s.count > 0);
   const customerTickets = tickets.filter(t => t.customerId === customer.id);
   const customerAgreements = agreements.filter(a => a.customerId === customer.id);
 
@@ -236,10 +242,10 @@ export default function CustomerDetail() {
               <div className="flex items-center gap-2">
                 {customerAssets.length > 0 && (
                   <Button size="sm" variant="outline" onClick={() => {
-                    const headers = ["Tag", "Name", "Type", "Serial Number", "Status", "Location", "Notes"];
+                    const headers = ["Tag", "Name", "Type", "Serial Number", "Status", "Location", "End Of Life (years)", "Age (years)", "Notes"];
                     const rows = customerAssets.map(a => {
                       const loc = customer.locations.find(l => l.id === a.locationId);
-                      return [a.tag, a.name, a.type, a.serialNumber, a.status, loc?.name ?? "", a.notes].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+                      return [a.tag, a.name, a.type, a.serialNumber, a.status, loc?.name ?? "", a.eolYears ?? "", getAssetLife(a).ageYears.toFixed(1), a.notes].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
                     });
                     const csv = [headers.join(","), ...rows].join("\n");
                     const blob = new Blob([csv], { type: "text/csv" });
@@ -256,6 +262,17 @@ export default function CustomerDetail() {
                 <Package className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
+            {lifeStats.length > 0 && (
+              <div className="px-5 py-3 border-b flex flex-wrap items-center gap-4">
+                {lifeStats.map(({ stage, count }) => (
+                  <div key={stage} className="flex items-center gap-1.5 text-xs">
+                    <span className={`h-2 w-2 rounded-full ${stageMeta[stage].dot}`} />
+                    <span className="text-muted-foreground">{stageMeta[stage].label}</span>
+                    <span className="font-semibold text-foreground tabular-nums">{count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {customerAssets.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -265,6 +282,7 @@ export default function CustomerDetail() {
                       <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Name</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">Type</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Status</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5 w-[170px]">Lifecycle</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -276,6 +294,7 @@ export default function CustomerDetail() {
                         <td className="px-4 py-2.5 text-foreground">{a.name}</td>
                         <td className="px-4 py-2.5 text-muted-foreground hidden sm:table-cell">{a.type}</td>
                         <td className="px-4 py-2.5"><StatusBadge status={a.status} /></td>
+                        <td className="px-4 py-2.5"><AssetLifeBar asset={a} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -304,6 +323,7 @@ export default function CustomerDetail() {
                       <th className="text-left font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">Location</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Priority</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-2.5">Status</th>
+                      <th className="text-left font-medium text-muted-foreground px-4 py-2.5 w-[170px]">Lifecycle</th>
                       <th className="text-left font-medium text-muted-foreground px-4 py-2.5 hidden sm:table-cell">Updated</th>
                     </tr>
                   </thead>

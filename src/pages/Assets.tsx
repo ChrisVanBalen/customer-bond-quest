@@ -24,6 +24,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, UserPlus, XCircle, MapPin, Upload, Download, ChevronDown } from "lucide-react";
+import { AssetLifeBar } from "@/components/AssetLifeBar";
+import { getAssetLife } from "@/lib/assetLife";
 
 const STATUS_OPTIONS: { value: AssetStatus; label: string }[] = [
   { value: "available", label: "Available" },
@@ -43,7 +45,7 @@ export default function Assets() {
   const [assigningAsset, setAssigningAsset] = useState<Asset | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<string>("");
   const [selectedLocation, setSelectedLocation] = useState<string>("");
-  const [form, setForm] = useState({ tag: "", name: "", type: "", serialNumber: "", status: "available" as AssetStatus, assignedTo: null as string | null, locationId: null as string | null, notes: "" });
+  const [form, setForm] = useState({ tag: "", name: "", type: "", serialNumber: "", status: "available" as AssetStatus, assignedTo: null as string | null, locationId: null as string | null, notes: "", eolYears: "" as string });
 
   const handleCsvImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,6 +64,7 @@ export default function Assets() {
       const typeIdx = headers.findIndex(h => h === "type");
       const serialIdx = headers.findIndex(h => h === "serialnumber" || h === "serial");
       const notesIdx = headers.findIndex(h => h === "notes");
+      const eolIdx = headers.findIndex(h => h === "endoflife" || h === "eol" || h === "eolyears" || h === "endoflifeyears");
 
       if (nameIdx === -1) {
         toast({ title: "Import failed", description: "CSV must have a 'Name' column.", variant: "destructive" });
@@ -83,6 +86,7 @@ export default function Assets() {
           assignedTo: null,
           locationId: null,
           notes: (notesIdx >= 0 && cols[notesIdx]) || "",
+          eolYears: eolIdx >= 0 && cols[eolIdx] && !Number.isNaN(Number(cols[eolIdx])) ? Number(cols[eolIdx]) : null,
         });
         imported++;
       }
@@ -93,11 +97,12 @@ export default function Assets() {
   };
 
   const handleCsvExport = () => {
-    const headers = ["Tag", "Name", "Type", "Serial Number", "Status", "Assigned To", "Location", "Notes"];
+    const headers = ["Tag", "Name", "Type", "Serial Number", "Status", "Assigned To", "Location", "End Of Life (years)", "Age (years)", "Life Used (%)", "Notes"];
     const rows = filtered.map(a => {
       const customer = customers.find(c => c.id === a.assignedTo);
       const loc = customer?.locations.find(l => l.id === a.locationId);
-      return [a.tag, a.name, a.type, a.serialNumber, a.status, customer?.name ?? "", loc?.name ?? "", a.notes].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+      const life = getAssetLife(a);
+      return [a.tag, a.name, a.type, a.serialNumber, a.status, customer?.name ?? "", loc?.name ?? "", a.eolYears ?? "", life.ageYears.toFixed(1), a.eolYears ? Math.round(life.pct) : "", a.notes].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
     });
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -124,13 +129,13 @@ export default function Assets() {
   const openNew = () => {
     setEditing(null);
     const nextNum = assets.length + 1;
-    setForm({ tag: `AST-${String(nextNum).padStart(3, "0")}`, name: "", type: "", serialNumber: "", status: "available", assignedTo: null, locationId: null, notes: "" });
+    setForm({ tag: `AST-${String(nextNum).padStart(3, "0")}`, name: "", type: "", serialNumber: "", status: "available", assignedTo: null, locationId: null, notes: "", eolYears: "" });
     setDialogOpen(true);
   };
 
   const openEdit = (a: Asset) => {
     setEditing(a);
-    setForm({ tag: a.tag, name: a.name, type: a.type, serialNumber: a.serialNumber, status: a.status, assignedTo: a.assignedTo, locationId: a.locationId, notes: a.notes });
+    setForm({ tag: a.tag, name: a.name, type: a.type, serialNumber: a.serialNumber, status: a.status, assignedTo: a.assignedTo, locationId: a.locationId, notes: a.notes, eolYears: a.eolYears != null ? String(a.eolYears) : "" });
     setDialogOpen(true);
   };
 
@@ -143,10 +148,12 @@ export default function Assets() {
 
   const handleSave = () => {
     if (!form.name.trim() || !form.tag.trim()) return;
+    const parsedEol = form.eolYears.trim() === "" ? null : Number(form.eolYears);
+    const payload = { ...form, eolYears: parsedEol != null && !Number.isNaN(parsedEol) && parsedEol > 0 ? parsedEol : null };
     if (editing) {
-      updateAsset(editing.id, form);
+      updateAsset(editing.id, payload);
     } else {
-      addAsset(form);
+      addAsset(payload);
     }
     setDialogOpen(false);
   };
@@ -235,6 +242,7 @@ export default function Assets() {
                 <th className="text-left font-medium text-muted-foreground px-4 py-3">Status</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">Assigned To</th>
                 <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden lg:table-cell">Location</th>
+                <th className="text-left font-medium text-muted-foreground px-4 py-3 hidden md:table-cell w-[160px]">Lifecycle</th>
                 <th className="text-right font-medium text-muted-foreground px-4 py-3">Actions</th>
               </tr>
             </thead>
@@ -262,6 +270,9 @@ export default function Assets() {
                         </span>
                       ) : "—"}
                     </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <AssetLifeBar asset={a} />
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(a)} title="Edit">
@@ -283,7 +294,7 @@ export default function Assets() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No assets found</td></tr>
+                <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No assets found</td></tr>
               )}
             </tbody>
           </table>
@@ -311,9 +322,23 @@ export default function Assets() {
               <Label>Name</Label>
               <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Device name or model" />
             </div>
-            <div className="grid gap-1.5">
-              <Label>Serial Number</Label>
-              <Input value={form.serialNumber} onChange={e => setForm(f => ({ ...f, serialNumber: e.target.value }))} className="font-mono" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Serial Number</Label>
+                <Input value={form.serialNumber} onChange={e => setForm(f => ({ ...f, serialNumber: e.target.value }))} className="font-mono" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>End Of Life (years)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={form.eolYears}
+                  onChange={e => setForm(f => ({ ...f, eolYears: e.target.value }))}
+                  placeholder="e.g. 5"
+                />
+                <p className="text-xs text-muted-foreground">Expected useful lifespan from in-service date.</p>
+              </div>
             </div>
             <div className="grid gap-1.5">
               <Label>Notes</Label>

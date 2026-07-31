@@ -22,7 +22,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Search, Pencil, Package, MapPin, ChevronDown, Star, UserCircle2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CreateFromTemplateDialog } from "@/components/CreateFromTemplateDialog";
+import { Plus, Search, Pencil, Package, MapPin, ChevronDown, Star, UserCircle2, FilePlus2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
@@ -38,6 +40,7 @@ export default function Tickets() {
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [techFilter, setTechFilter] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, projectId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
@@ -120,7 +123,21 @@ export default function Tickets() {
       <PageHeader
         title="Service Tickets"
         description={`${tickets.filter(t => t.status !== "closed").length} active tickets`}
-        action={<Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />New Ticket</Button>}
+        action={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-1.5" />New Ticket<ChevronDown className="h-4 w-4 ml-1.5" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+              <DropdownMenuItem onSelect={openNew}>
+                <Plus className="h-4 w-4 mr-2" />Blank ticket
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setTemplateDialogOpen(true)}>
+                <FilePlus2 className="h-4 w-4 mr-2" />New ticket from template
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
       />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -425,6 +442,8 @@ export default function Tickets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreateFromTemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} />
     </div>
   );
 }

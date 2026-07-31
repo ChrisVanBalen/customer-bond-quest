@@ -40,6 +40,7 @@ export default function Tickets() {
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [techFilter, setTechFilter] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
     title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, projectId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,

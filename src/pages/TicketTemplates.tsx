@@ -120,13 +120,18 @@ export default function TicketTemplates() {
                   <td className="px-4 py-3">{t.tasks.length}</td>
                   <td className="px-4 py-3 hidden lg:table-cell">{t.tasks.reduce((s, x) => s + (x.time || 0), 0)}h</td>
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(t)}>
-                        <Pencil className="h-4 w-4" />
+                    <div className="flex justify-end items-center gap-1">
+                      <Button variant="outline" size="sm" className="h-8" onClick={() => setCreateFrom(t.id)}>
+                        <FilePlus2 className="h-3.5 w-3.5 mr-1.5" />Create Ticket
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(t)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(t)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(t)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </td>
                 </tr>

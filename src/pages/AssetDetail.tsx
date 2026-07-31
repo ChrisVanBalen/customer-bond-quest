@@ -3,6 +3,8 @@ import { useStore } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
+import { AssetLifeBar } from "@/components/AssetLifeBar";
+import { getAssetLife, stageMeta } from "@/lib/assetLife";
 import { ArrowLeft, Package, User, Calendar, Hash, FileText, CircleDot, Ticket, MapPin } from "lucide-react";
 
 const eventIcons: Record<string, string> = {
@@ -39,6 +41,7 @@ export default function AssetDetail() {
     );
   }
 
+  const life = getAssetLife(asset);
   const currentCustomer = customers.find(c => c.id === asset.assignedTo);
   const assetTickets = tickets.filter(t => t.assetId === asset.id);
   const history = [...asset.history].sort((a, b) => {
@@ -68,6 +71,22 @@ export default function AssetDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Asset Info */}
         <div className="lg:col-span-1 space-y-6">
+          <div className="bg-card rounded-xl border shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-foreground">Lifecycle &amp; End Of Life</h2>
+              {life.stage !== "unknown" && (
+                <span className={`text-xs font-semibold ${stageMeta[life.stage].text}`}>{stageMeta[life.stage].label}</span>
+              )}
+            </div>
+            {life.stage === "unknown" ? (
+              <p className="text-sm text-muted-foreground">
+                No end-of-life set for this asset. Add an expected lifespan (in years) from the asset list to track its age.
+              </p>
+            ) : (
+              <AssetLifeBar asset={asset} variant="full" />
+            )}
+          </div>
+
           <div className="bg-card rounded-xl border shadow-sm p-5">
             <h2 className="text-sm font-semibold text-foreground mb-4">Asset Information</h2>
             <dl className="space-y-3.5">
@@ -108,6 +127,15 @@ export default function AssetDetail() {
                   </div>
                 </div>
               )}
+              <div className="flex items-start gap-3">
+                <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                <div>
+                  <dt className="text-xs text-muted-foreground">End Of Life</dt>
+                  <dd className="text-sm text-foreground tabular-nums">
+                    {asset.eolYears ? `${asset.eolYears} years${life.eolDate ? ` · ${life.eolDate}` : ""}` : "Not set"}
+                  </dd>
+                </div>
+              </div>
               <div className="flex items-start gap-3">
                 <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>

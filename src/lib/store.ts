@@ -43,6 +43,8 @@ export interface Asset {
   assignedTo: string | null;
   locationId: string | null;
   notes: string;
+  /** Expected useful lifespan in years (end of life). Null when not set. */
+  eolYears: number | null;
   createdAt: string;
   decommissionedAt: string | null;
   history: DeploymentEvent[];
@@ -383,6 +385,7 @@ function loadData(): StoreData {
       parsed.assets = parsed.assets.map((a: any) => ({
         ...a,
         locationId: a.locationId ?? null,
+        eolYears: a.eolYears ?? null,
         history: a.history ?? [{ id: crypto.randomUUID(), date: a.createdAt, type: "created", customerId: null, previousCustomerId: null, notes: "Added to inventory" }],
       }));
       // Migrate tickets

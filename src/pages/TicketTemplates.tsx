@@ -35,6 +35,8 @@ export default function TicketTemplates() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TicketTemplate | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [createFrom, setCreateFrom] = useState<string | null>(null);
+
 
   const filtered = ticketTemplates.filter(t =>
     [t.name, t.title, t.description].some(f => f.toLowerCase().includes(search.toLowerCase()))

@@ -14,7 +14,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Search, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, FilePlus2 } from "lucide-react";
+import { CreateFromTemplateDialog } from "@/components/CreateFromTemplateDialog";
 
 const priorities: TicketPriority[] = ["low", "medium", "high", "critical"];
 

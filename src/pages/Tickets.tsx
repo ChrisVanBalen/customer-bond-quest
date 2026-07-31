@@ -120,7 +120,21 @@ export default function Tickets() {
       <PageHeader
         title="Service Tickets"
         description={`${tickets.filter(t => t.status !== "closed").length} active tickets`}
-        action={<Button onClick={openNew}><Plus className="h-4 w-4 mr-1.5" />New Ticket</Button>}
+        action={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button><Plus className="h-4 w-4 mr-1.5" />New Ticket<ChevronDown className="h-4 w-4 ml-1.5" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+              <DropdownMenuItem onSelect={openNew}>
+                <Plus className="h-4 w-4 mr-2" />Blank ticket
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setTemplateDialogOpen(true)}>
+                <FilePlus2 className="h-4 w-4 mr-2" />New ticket from template
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
       />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">

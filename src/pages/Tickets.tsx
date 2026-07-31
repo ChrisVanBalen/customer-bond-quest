@@ -442,6 +442,8 @@ export default function Tickets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreateFromTemplateDialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen} />
     </div>
   );
 }

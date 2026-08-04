@@ -318,9 +318,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <Clock className="h-4 w-4" /> Time Tracking
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setTimeDialog(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Log Time
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={() => setTimeDialog(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Log Time
+                </Button>
+              )}
             </div>
             {ticket.timeEntries.length === 0 ? (
               <p className="text-sm text-muted-foreground">No time entries.</p>

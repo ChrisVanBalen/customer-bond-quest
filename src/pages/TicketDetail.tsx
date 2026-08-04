@@ -31,6 +31,7 @@ import {
   Circle,
   Pencil,
   Trash2,
+  Lock,
 } from "lucide-react";
 
 export default function TicketDetail() {
@@ -133,6 +134,8 @@ export default function TicketDetail() {
   const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
   const totalActualTaskTime = ticket.tasks.reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
 
+  const readOnly = ticket.status === "billing" || ticket.status === "closed";
+
   return (
     <div className="animate-fade-in">
       <Link to="/tickets" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -140,6 +143,20 @@ export default function TicketDetail() {
       </Link>
 
       <PageHeader title={ticket.title} />
+
+      {readOnly && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-foreground">
+            <Lock className="h-4 w-4 text-amber-600" />
+            <span>
+              This ticket is <span className="font-semibold capitalize">{ticket.status}</span> and is read only. Reopen it to make changes.
+            </span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => updateTicket(ticket.id, { status: "in_progress" })}>
+            Reopen Ticket
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
@@ -195,9 +212,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <ListChecks className="h-4 w-4" /> Tasks
               </h2>
-              <Button size="sm" variant="outline" onClick={openAddTask}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={openAddTask}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
+                </Button>
+              )}
             </div>
             {ticket.tasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">No tasks yet.</p>
@@ -211,8 +230,9 @@ export default function TicketDetail() {
                     >
                       <button
                         type="button"
+                        disabled={readOnly}
                         onClick={() => toggleTicketTask(ticket.id, task.id)}
-                        className="shrink-0"
+                        className="shrink-0 disabled:cursor-not-allowed"
                         aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
                       >
                         {task.completed ? (
@@ -237,14 +257,16 @@ export default function TicketDetail() {
                         </span>
                         {" / "}{task.time.toFixed(1)} hrs
                       </span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditTask(task)} aria-label="Edit task">
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteTicketTask(ticket.id, task.id)} aria-label="Delete task">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                      {!readOnly && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditTask(task)} aria-label="Edit task">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteTicketTask(ticket.id, task.id)} aria-label="Delete task">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -266,9 +288,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" /> Ticket Log
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setLogDialog(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Entry
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={() => setLogDialog(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Entry
+                </Button>
+              )}
             </div>
             {ticket.logs.length === 0 ? (
               <p className="text-sm text-muted-foreground">No log entries yet.</p>
@@ -294,9 +318,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <Clock className="h-4 w-4" /> Time Tracking
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setTimeDialog(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Log Time
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={() => setTimeDialog(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Log Time
+                </Button>
+              )}
             </div>
             {ticket.timeEntries.length === 0 ? (
               <p className="text-sm text-muted-foreground">No time entries.</p>
@@ -335,9 +361,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <DollarSign className="h-4 w-4" /> Billable Items
               </h2>
-              <Button size="sm" variant="outline" onClick={openAddBillable}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Item
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={openAddBillable}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Item
+                </Button>
+              )}
             </div>
             {ticket.billableItems.length === 0 ? (
               <p className="text-sm text-muted-foreground">No billable items.</p>
@@ -365,14 +393,16 @@ export default function TicketDetail() {
                         <td className="py-2 text-right tabular-nums">${item.unitPrice.toFixed(2)}</td>
                         <td className="py-2 text-right tabular-nums font-medium">${(item.quantity * item.unitPrice).toFixed(2)}</td>
                         <td className="py-2 text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBillable(item)} aria-label="Edit item">
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteBillableItem(ticket.id, item.id)} aria-label="Delete item">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          {!readOnly && (
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBillable(item)} aria-label="Edit item">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteBillableItem(ticket.id, item.id)} aria-label="Delete item">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -446,8 +476,9 @@ export default function TicketDetail() {
                             </div>
                             <button
                               type="button"
+                              disabled={readOnly}
                               onClick={() => setPrimary(t.id)}
-                              className={`text-xs px-2 py-1 rounded shrink-0 ${isPrimary ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+                              className={`text-xs px-2 py-1 rounded shrink-0 disabled:cursor-not-allowed ${isPrimary ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
                             >
                               {isPrimary ? "★ Primary" : "Set primary"}
                             </button>
@@ -456,7 +487,7 @@ export default function TicketDetail() {
                       })}
                     </div>
                   )}
-                  {activeTechs.length > 0 && (
+                  {!readOnly && activeTechs.length > 0 && (
                     <details className="text-sm">
                       <summary className="cursor-pointer text-primary hover:underline">Manage assignments</summary>
                       <div className="mt-2 border rounded-md divide-y">

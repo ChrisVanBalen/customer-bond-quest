@@ -7,6 +7,7 @@ const statusStyles: Record<string, string> = {
   open: "bg-amber-50 text-amber-700 ring-amber-600/20",
   in_progress: "bg-blue-50 text-blue-700 ring-blue-600/20",
   resolved: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+  billing: "bg-purple-50 text-purple-700 ring-purple-600/20",
   closed: "bg-zinc-100 text-zinc-500 ring-zinc-500/20",
   low: "bg-zinc-100 text-zinc-600 ring-zinc-500/20",
   medium: "bg-amber-50 text-amber-700 ring-amber-600/20",

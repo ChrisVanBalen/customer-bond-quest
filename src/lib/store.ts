@@ -96,10 +96,21 @@ export interface Technician {
   createdAt: string;
 }
 
+export type TicketCategory = "service" | "sales" | "purchasing" | "porting" | "quoting";
+
+export const TICKET_CATEGORIES: { value: TicketCategory; label: string }[] = [
+  { value: "service", label: "Service" },
+  { value: "sales", label: "Sales" },
+  { value: "purchasing", label: "Purchasing" },
+  { value: "porting", label: "Porting" },
+  { value: "quoting", label: "Quoting" },
+];
+
 export interface Ticket {
   id: string;
   title: string;
   description: string;
+  category: TicketCategory;
   customerId: string;
   locationId: string | null;
   assetId: string | null;

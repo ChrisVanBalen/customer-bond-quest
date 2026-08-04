@@ -355,9 +355,9 @@ const defaultData: StoreData = {
     },
   ],
   tickets: [
-    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", customerId: "c1", locationId: null, assetId: "a1", projectId: null, priority: "high", status: "in_progress", technicianIds: ["tech1"], primaryTechnicianId: "tech1", createdAt: "2025-03-20", updatedAt: "2025-03-21", tasks: [], logs: [], billableItems: [], timeEntries: [] },
-    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", customerId: "c2", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: ["tech2", "tech3"], primaryTechnicianId: "tech2", createdAt: "2025-03-19", updatedAt: "2025-03-19", tasks: [], logs: [], billableItems: [], timeEntries: [] },
-    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", customerId: "c3", locationId: null, assetId: "a2", projectId: "p1", priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null, createdAt: "2025-03-18", updatedAt: "2025-03-18", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t1", title: "Email server not syncing", description: "Outlook clients unable to sync with Exchange server since this morning.", category: "service", customerId: "c1", locationId: null, assetId: "a1", projectId: null, priority: "high", status: "in_progress", technicianIds: ["tech1"], primaryTechnicianId: "tech1", createdAt: "2025-03-20", updatedAt: "2025-03-21", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t2", title: "New workstation setup", description: "Set up 3 new workstations for engineering hires starting next week.", category: "purchasing", customerId: "c2", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: ["tech2", "tech3"], primaryTechnicianId: "tech2", createdAt: "2025-03-19", updatedAt: "2025-03-19", tasks: [], logs: [], billableItems: [], timeEntries: [] },
+    { id: "t3", title: "WiFi coverage gap in Building B", description: "Students reporting weak signal in second floor classrooms.", category: "service", customerId: "c3", locationId: null, assetId: "a2", projectId: "p1", priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null, createdAt: "2025-03-18", updatedAt: "2025-03-18", tasks: [], logs: [], billableItems: [], timeEntries: [] },
   ],
   agreements: [
     {
@@ -402,6 +402,7 @@ function loadData(): StoreData {
       // Migrate tickets
       parsed.tickets = parsed.tickets.map((t: any) => ({
         ...t,
+        category: t.category ?? "service",
         assetId: t.assetId ?? null,
         locationId: t.locationId ?? null,
         projectId: t.projectId ?? null,
@@ -843,6 +844,7 @@ export function useStore() {
         id: crypto.randomUUID(),
         title: overrides.titleSuffix ? `${tpl.title} — ${overrides.titleSuffix}` : tpl.title,
         description: tpl.description,
+        category: "service",
         customerId: overrides.customerId,
         locationId: overrides.locationId ?? null,
         assetId: null,
@@ -873,6 +875,7 @@ export function useStore() {
         id: crypto.randomUUID(),
         title: tpl ? `${tpl.title} — ${sch.nextRunDate}` : `${sch.name} — ${sch.nextRunDate}`,
         description: tpl?.description ?? "",
+        category: "service",
         customerId: sch.customerId,
         locationId: sch.locationId,
         assetId: null,

@@ -54,6 +54,7 @@ export default function ProjectDetail() {
     addTicket({
       title: form.title.trim(),
       description: form.description,
+      category: "service",
       customerId: project.customerId,
       locationId: null,
       assetId: null,

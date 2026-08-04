@@ -133,6 +133,8 @@ export default function TicketDetail() {
   const totalTaskTime = ticket.tasks.reduce((sum, t) => sum + t.time, 0);
   const totalActualTaskTime = ticket.tasks.reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
 
+  const readOnly = ticket.status === "billing" || ticket.status === "closed";
+
   return (
     <div className="animate-fade-in">
       <Link to="/tickets" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
@@ -140,6 +142,20 @@ export default function TicketDetail() {
       </Link>
 
       <PageHeader title={ticket.title} />
+
+      {readOnly && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-foreground">
+            <Lock className="h-4 w-4 text-amber-600" />
+            <span>
+              This ticket is <span className="font-semibold capitalize">{ticket.status}</span> and is read only. Reopen it to make changes.
+            </span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => updateTicket(ticket.id, { status: "in_progress" })}>
+            Reopen Ticket
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}

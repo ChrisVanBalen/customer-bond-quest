@@ -51,7 +51,7 @@ export interface Asset {
 }
 
 export type TicketPriority = "low" | "medium" | "high" | "critical";
-export type TicketStatus = "open" | "in_progress" | "resolved" | "closed";
+export type TicketStatus = "open" | "in_progress" | "resolved" | "billing" | "closed";
 
 export interface TicketLogEntry {
   id: string;

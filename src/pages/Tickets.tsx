@@ -32,6 +32,7 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
   { value: "resolved", label: "Resolved" },
+  { value: "billing", label: "Billing" },
   { value: "closed", label: "Closed" },
 ];
 
@@ -73,7 +74,9 @@ export default function Tickets() {
 
   const filtered = tickets.filter(t => {
     const matchSearch = [t.title, t.description].some(f => f.toLowerCase().includes(search.toLowerCase()));
-    const matchCategory = categoryTab === "all" || t.category === categoryTab;
+    const matchCategory = categoryTab === "billing"
+      ? t.status === "billing"
+      : (categoryTab === "all" || t.category === categoryTab) && t.status !== "billing";
     const matchStatus = statusFilter.length === 0 || statusFilter.includes(t.status);
     const matchTech = techFilter.length === 0 || techFilter.some(v =>
       v === "unassigned" ? t.technicianIds.length === 0 : t.technicianIds.includes(v)
@@ -81,7 +84,9 @@ export default function Tickets() {
     return matchSearch && matchCategory && matchStatus && matchTech;
   });
 
-  const categoryCounts = tickets.reduce<Record<string, number>>((acc, t) => {
+  const billingTickets = tickets.filter(t => t.status === "billing");
+  const nonBillingTickets = tickets.filter(t => t.status !== "billing");
+  const categoryCounts = nonBillingTickets.reduce<Record<string, number>>((acc, t) => {
     acc[t.category] = (acc[t.category] ?? 0) + 1;
     return acc;
   }, {});
@@ -95,7 +100,7 @@ export default function Tickets() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", description: "", category: (categoryTab === "all" ? "service" : categoryTab) as TicketCategory, customerId: customers[0]?.id ?? "", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
+    setForm({ title: "", description: "", category: (categoryTab === "all" || categoryTab === "billing" ? "service" : categoryTab) as TicketCategory, customerId: customers[0]?.id ?? "", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
     setDialogOpen(true);
   };
 
@@ -151,13 +156,16 @@ export default function Tickets() {
       <Tabs value={categoryTab} onValueChange={setCategoryTab} className="mb-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="all">
-            All <span className="ml-1.5 text-xs text-muted-foreground">{tickets.length}</span>
+            All <span className="ml-1.5 text-xs text-muted-foreground">{nonBillingTickets.length}</span>
           </TabsTrigger>
           {TICKET_CATEGORIES.map(c => (
             <TabsTrigger key={c.value} value={c.value}>
               {c.label} <span className="ml-1.5 text-xs text-muted-foreground">{categoryCounts[c.value] ?? 0}</span>
             </TabsTrigger>
           ))}
+          <TabsTrigger value="billing">
+            Billing <span className="ml-1.5 text-xs text-muted-foreground">{billingTickets.length}</span>
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -458,6 +466,7 @@ export default function Tickets() {
                     <SelectItem value="open">Open</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>
                     <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="billing">Billing</SelectItem>
                     <SelectItem value="closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>

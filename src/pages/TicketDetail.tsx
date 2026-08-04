@@ -476,8 +476,9 @@ export default function TicketDetail() {
                             </div>
                             <button
                               type="button"
+                              disabled={readOnly}
                               onClick={() => setPrimary(t.id)}
-                              className={`text-xs px-2 py-1 rounded shrink-0 ${isPrimary ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
+                              className={`text-xs px-2 py-1 rounded shrink-0 disabled:cursor-not-allowed ${isPrimary ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}`}
                             >
                               {isPrimary ? "★ Primary" : "Set primary"}
                             </button>
@@ -486,7 +487,7 @@ export default function TicketDetail() {
                       })}
                     </div>
                   )}
-                  {activeTechs.length > 0 && (
+                  {!readOnly && activeTechs.length > 0 && (
                     <details className="text-sm">
                       <summary className="cursor-pointer text-primary hover:underline">Manage assignments</summary>
                       <div className="mt-2 border rounded-md divide-y">

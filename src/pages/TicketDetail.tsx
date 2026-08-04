@@ -393,14 +393,16 @@ export default function TicketDetail() {
                         <td className="py-2 text-right tabular-nums">${item.unitPrice.toFixed(2)}</td>
                         <td className="py-2 text-right tabular-nums font-medium">${(item.quantity * item.unitPrice).toFixed(2)}</td>
                         <td className="py-2 text-right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBillable(item)} aria-label="Edit item">
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteBillableItem(ticket.id, item.id)} aria-label="Delete item">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
+                          {!readOnly && (
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditBillable(item)} aria-label="Edit item">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => deleteBillableItem(ticket.id, item.id)} aria-label="Delete item">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

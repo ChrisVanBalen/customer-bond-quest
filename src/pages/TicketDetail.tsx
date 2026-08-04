@@ -212,9 +212,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <ListChecks className="h-4 w-4" /> Tasks
               </h2>
-              <Button size="sm" variant="outline" onClick={openAddTask}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={openAddTask}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Task
+                </Button>
+              )}
             </div>
             {ticket.tasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">No tasks yet.</p>

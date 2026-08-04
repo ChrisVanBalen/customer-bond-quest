@@ -31,6 +31,7 @@ import {
   Circle,
   Pencil,
   Trash2,
+  Lock,
 } from "lucide-react";
 
 export default function TicketDetail() {

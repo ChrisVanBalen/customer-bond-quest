@@ -230,8 +230,9 @@ export default function TicketDetail() {
                     >
                       <button
                         type="button"
+                        disabled={readOnly}
                         onClick={() => toggleTicketTask(ticket.id, task.id)}
-                        className="shrink-0"
+                        className="shrink-0 disabled:cursor-not-allowed"
                         aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
                       >
                         {task.completed ? (

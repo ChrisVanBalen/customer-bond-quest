@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useStore, Ticket, TicketPriority, TicketStatus } from "@/lib/store";
+import { useStore, Ticket, TicketPriority, TicketStatus, TicketCategory, TICKET_CATEGORIES } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -37,13 +38,14 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
 export default function Tickets() {
   const { tickets, customers, assets, technicians, projects, addTicket, updateTicket } = useStore();
   const [search, setSearch] = useState("");
+  const [categoryTab, setCategoryTab] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
   const [techFilter, setTechFilter] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Ticket | null>(null);
   const [form, setForm] = useState({
-    title: "", description: "", customerId: "", locationId: null as string | null, assetId: null as string | null, projectId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
+    title: "", description: "", category: "service" as TicketCategory, customerId: "", locationId: null as string | null, assetId: null as string | null, projectId: null as string | null, priority: "medium" as TicketPriority, status: "open" as TicketStatus,
     technicianIds: [] as string[], primaryTechnicianId: null as string | null,
   });
 
@@ -71,12 +73,18 @@ export default function Tickets() {
 
   const filtered = tickets.filter(t => {
     const matchSearch = [t.title, t.description].some(f => f.toLowerCase().includes(search.toLowerCase()));
+    const matchCategory = categoryTab === "all" || t.category === categoryTab;
     const matchStatus = statusFilter.length === 0 || statusFilter.includes(t.status);
     const matchTech = techFilter.length === 0 || techFilter.some(v =>
       v === "unassigned" ? t.technicianIds.length === 0 : t.technicianIds.includes(v)
     );
-    return matchSearch && matchStatus && matchTech;
+    return matchSearch && matchCategory && matchStatus && matchTech;
   });
+
+  const categoryCounts = tickets.reduce<Record<string, number>>((acc, t) => {
+    acc[t.category] = (acc[t.category] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const selectedCustomer = customers.find(c => c.id === form.customerId);
   const customerLocations = selectedCustomer?.locations ?? [];
@@ -87,13 +95,13 @@ export default function Tickets() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ title: "", description: "", customerId: customers[0]?.id ?? "", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
+    setForm({ title: "", description: "", category: (categoryTab === "all" ? "service" : categoryTab) as TicketCategory, customerId: customers[0]?.id ?? "", locationId: null, assetId: null, projectId: null, priority: "medium", status: "open", technicianIds: [], primaryTechnicianId: null });
     setDialogOpen(true);
   };
 
   const openEdit = (t: Ticket) => {
     setEditing(t);
-    setForm({ title: t.title, description: t.description, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, projectId: t.projectId, priority: t.priority, status: t.status, technicianIds: t.technicianIds, primaryTechnicianId: t.primaryTechnicianId });
+    setForm({ title: t.title, description: t.description, category: t.category, customerId: t.customerId, locationId: t.locationId, assetId: t.assetId, projectId: t.projectId, priority: t.priority, status: t.status, technicianIds: t.technicianIds, primaryTechnicianId: t.primaryTechnicianId });
     setDialogOpen(true);
   };
 
@@ -139,6 +147,19 @@ export default function Tickets() {
           </DropdownMenu>
         }
       />
+
+      <Tabs value={categoryTab} onValueChange={setCategoryTab} className="mb-4">
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="all">
+            All <span className="ml-1.5 text-xs text-muted-foreground">{tickets.length}</span>
+          </TabsTrigger>
+          {TICKET_CATEGORIES.map(c => (
+            <TabsTrigger key={c.value} value={c.value}>
+              {c.label} <span className="ml-1.5 text-xs text-muted-foreground">{categoryCounts[c.value] ?? 0}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative max-w-sm flex-1">
@@ -312,6 +333,17 @@ export default function Tickets() {
             <div className="grid gap-1.5">
               <Label>Title</Label>
               <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Category</Label>
+              <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v as TicketCategory }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TICKET_CATEGORIES.map(c => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-1.5">
               <Label>Customer</Label>

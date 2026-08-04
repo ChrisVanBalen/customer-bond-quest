@@ -361,9 +361,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <DollarSign className="h-4 w-4" /> Billable Items
               </h2>
-              <Button size="sm" variant="outline" onClick={openAddBillable}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Item
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={openAddBillable}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Item
+                </Button>
+              )}
             </div>
             {ticket.billableItems.length === 0 ? (
               <p className="text-sm text-muted-foreground">No billable items.</p>

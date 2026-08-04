@@ -288,9 +288,11 @@ export default function TicketDetail() {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" /> Ticket Log
               </h2>
-              <Button size="sm" variant="outline" onClick={() => setLogDialog(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Entry
-              </Button>
+              {!readOnly && (
+                <Button size="sm" variant="outline" onClick={() => setLogDialog(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Entry
+                </Button>
+              )}
             </div>
             {ticket.logs.length === 0 ? (
               <p className="text-sm text-muted-foreground">No log entries yet.</p>

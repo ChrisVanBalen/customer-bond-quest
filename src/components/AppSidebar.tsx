@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, TicketCheck, FileSignature, Wrench, FolderKanban, ChevronRight, LayoutTemplate, CalendarClock } from "lucide-react";
+import { LayoutDashboard, Users, Package, TicketCheck, FileSignature, Wrench, FolderKanban, ChevronRight, LayoutTemplate, CalendarClock, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -32,6 +32,7 @@ const bottomNavItems = [
   { title: "Projects", url: "/projects", icon: FolderKanban },
   { title: "Technicians", url: "/technicians", icon: Wrench },
   { title: "Agreements", url: "/agreements", icon: FileSignature },
+  { title: "App Settings", url: "/settings", icon: Settings },
 ];
 
 const linkClass = "flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors";

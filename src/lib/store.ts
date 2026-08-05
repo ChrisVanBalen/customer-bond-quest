@@ -50,8 +50,8 @@ export interface Asset {
   history: DeploymentEvent[];
 }
 
-export type TicketPriority = "low" | "medium" | "high" | "critical";
-export type TicketStatus = "open" | "in_progress" | "resolved" | "billing" | "closed";
+export type TicketPriority = "low" | "medium" | "high" | "critical" | (string & {});
+export type TicketStatus = "open" | "in_progress" | "resolved" | "billing" | "closed" | (string & {});
 
 export interface TicketLogEntry {
   id: string;
@@ -96,7 +96,7 @@ export interface Technician {
   createdAt: string;
 }
 
-export type TicketCategory = "service" | "sales" | "purchasing" | "porting" | "quoting";
+export type TicketCategory = "service" | "sales" | "purchasing" | "porting" | "quoting" | (string & {});
 
 export const TICKET_CATEGORIES: { value: TicketCategory; label: string }[] = [
   { value: "service", label: "Service" },
@@ -127,7 +127,7 @@ export interface Ticket {
   timeEntries: TimeEntry[];
 }
 
-export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
+export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled" | (string & {});
 
 export interface Project {
   id: string;
@@ -143,7 +143,109 @@ export interface Project {
 }
 
 
-export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled";
+/* ---------------- App Settings: configurable dropdown options ---------------- */
+
+/** Color keys map to badge styles in StatusBadge. */
+export const OPTION_COLORS = [
+  "gray", "blue", "green", "amber", "orange", "red", "purple", "violet", "sky", "teal", "pink",
+] as const;
+export type OptionColor = (typeof OPTION_COLORS)[number];
+
+export interface SettingOption {
+  id: string;
+  /** Stable value stored on records. Cannot be changed after creation. */
+  value: string;
+  label: string;
+  color: OptionColor;
+  /** System options that other app logic depends on — cannot be deleted. */
+  locked?: boolean;
+}
+
+export interface AppSettings {
+  ticketStatuses: SettingOption[];
+  ticketPriorities: SettingOption[];
+  ticketCategories: SettingOption[];
+  agreementStages: SettingOption[];
+  projectStatuses: SettingOption[];
+  assetStatuses: SettingOption[];
+}
+
+export type SettingGroupKey = keyof AppSettings;
+
+export const SETTING_GROUPS: { key: SettingGroupKey; title: string; description: string }[] = [
+  { key: "ticketStatuses", title: "Ticket Statuses", description: "Workflow states available on service tickets." },
+  { key: "ticketPriorities", title: "Ticket Priorities", description: "Urgency levels available on tickets and templates." },
+  { key: "ticketCategories", title: "Ticket Categories", description: "Buckets shown as tabs on the tickets page." },
+  { key: "agreementStages", title: "Agreement Stages", description: "Lifecycle stages for service agreements." },
+  { key: "projectStatuses", title: "Project Statuses", description: "Lifecycle states for projects." },
+  { key: "assetStatuses", title: "Asset Statuses", description: "States an asset can be in." },
+];
+
+const opt = (value: string, label: string, color: OptionColor, locked = false): SettingOption =>
+  ({ id: `opt-${value}-${label.length}-${color}`, value, label, color, locked });
+
+export const defaultSettings: AppSettings = {
+  ticketStatuses: [
+    opt("open", "Open", "amber", true),
+    opt("in_progress", "In Progress", "blue", true),
+    opt("resolved", "Resolved", "green", true),
+    opt("billing", "Billing", "purple", true),
+    opt("closed", "Closed", "gray", true),
+  ],
+  ticketPriorities: [
+    opt("low", "Low", "gray", true),
+    opt("medium", "Medium", "amber", true),
+    opt("high", "High", "orange", true),
+    opt("critical", "Critical", "red", true),
+  ],
+  ticketCategories: [
+    opt("service", "Service", "blue", true),
+    opt("sales", "Sales", "green"),
+    opt("purchasing", "Purchasing", "teal"),
+    opt("porting", "Porting", "sky"),
+    opt("quoting", "Quoting", "violet"),
+  ],
+  agreementStages: [
+    opt("draft", "Draft", "gray", true),
+    opt("quoting", "Quoting", "violet"),
+    opt("sent", "Sent", "sky"),
+    opt("accepted", "Accepted", "green"),
+    opt("executed", "Executed", "blue"),
+    opt("expired", "Expired", "red"),
+    opt("cancelled", "Cancelled", "gray"),
+  ],
+  projectStatuses: [
+    opt("planning", "Planning", "gray", true),
+    opt("active", "Active", "blue", true),
+    opt("on_hold", "On Hold", "amber"),
+    opt("completed", "Completed", "green", true),
+    opt("cancelled", "Cancelled", "gray"),
+  ],
+  assetStatuses: [
+    opt("available", "Available", "green", true),
+    opt("assigned", "Assigned", "blue", true),
+    opt("decommissioned", "Decommissioned", "gray", true),
+  ],
+};
+
+/** Reads settings straight from storage (for non-hook consumers like badges). */
+export function readSettings(): AppSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.settings) return { ...defaultSettings, ...parsed.settings };
+    }
+  } catch {}
+  return defaultSettings;
+}
+
+export function slugifyOptionValue(label: string): string {
+  return label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+
+export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled" | (string & {});
 
 export interface AgreementServiceLine {
   id: string;
@@ -217,6 +319,7 @@ interface StoreData {
   projects: Project[];
   ticketTemplates: TicketTemplate[];
   scheduledTickets: ScheduledTicket[];
+  settings: AppSettings;
 }
 
 export const FREQUENCY_LABELS: Record<ScheduleFrequency, string> = {
@@ -245,6 +348,7 @@ export function advanceDate(date: string, frequency: ScheduleFrequency): string 
 const STORAGE_KEY = "crm-psa-data";
 
 const defaultData: StoreData = {
+  settings: defaultSettings,
   ticketTemplates: [
     {
       id: "tpl1", name: "Quarterly Maintenance", title: "Quarterly preventive maintenance",
@@ -429,6 +533,8 @@ function loadData(): StoreData {
         locationId: s.locationId ?? null,
       }));
 
+      // Migrate app settings
+      parsed.settings = { ...defaultSettings, ...(parsed.settings ?? {}) };
       // Migrate customers to have locations
       parsed.customers = parsed.customers.map((c: any) => ({
         ...c,
@@ -901,6 +1007,52 @@ export function useStore() {
     });
   }, []);
 
+  const addSettingOption = useCallback((group: SettingGroupKey, option: { label: string; color: OptionColor; value?: string }) => {
+    setData(prev => {
+      const list = prev.settings[group];
+      const value = (option.value && slugifyOptionValue(option.value)) || slugifyOptionValue(option.label);
+      if (!value || list.some(o => o.value === value)) return prev;
+      return {
+        ...prev,
+        settings: {
+          ...prev.settings,
+          [group]: [...list, { id: crypto.randomUUID(), value, label: option.label.trim(), color: option.color }],
+        },
+      };
+    });
+  }, []);
+
+  const updateSettingOption = useCallback((group: SettingGroupKey, id: string, updates: Partial<Pick<SettingOption, "label" | "color">>) => {
+    setData(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        [group]: prev.settings[group].map(o => o.id === id ? { ...o, ...updates } : o),
+      },
+    }));
+  }, []);
+
+  const deleteSettingOption = useCallback((group: SettingGroupKey, id: string) => {
+    setData(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        [group]: prev.settings[group].filter(o => o.id !== id || o.locked),
+      },
+    }));
+  }, []);
+
+  const moveSettingOption = useCallback((group: SettingGroupKey, id: string, direction: -1 | 1) => {
+    setData(prev => {
+      const list = [...prev.settings[group]];
+      const i = list.findIndex(o => o.id === id);
+      const j = i + direction;
+      if (i === -1 || j < 0 || j >= list.length) return prev;
+      [list[i], list[j]] = [list[j], list[i]];
+      return { ...prev, settings: { ...prev.settings, [group]: list } };
+    });
+  }, []);
+
   return {
     ...data,
     addCustomer, updateCustomer, deleteCustomer,
@@ -915,6 +1067,7 @@ export function useStore() {
     addTicketTemplate, updateTicketTemplate, deleteTicketTemplate,
     addScheduledTicket, updateScheduledTicket, deleteScheduledTicket,
     createTicketFromTemplate, runScheduledTicket,
+    addSettingOption, updateSettingOption, deleteSettingOption, moveSettingOption,
   };
 
 }

@@ -12,15 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { differenceInMonths } from "date-fns";
 
-const stages: AgreementStage[] = ["draft", "quoting", "sent", "accepted", "executed", "expired", "cancelled"];
-
 function isExpiringSoon(endDate: string): boolean {
   const months = differenceInMonths(new Date(endDate), new Date());
   return months >= 0 && months <= 6;
 }
 
 export default function Agreements() {
-  const { agreements, customers, addAgreement } = useStore();
+  const { agreements, customers, settings, addAgreement } = useStore();
+  const stages = settings.agreementStages;
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [open, setOpen] = useState(false);
@@ -81,7 +80,7 @@ export default function Agreements() {
                 <Select value={form.stage} onValueChange={v => setForm(f => ({ ...f, stage: v as AgreementStage }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {stages.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                    {stages.map(s => <SelectItem key={s.id} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -125,7 +124,7 @@ export default function Agreements() {
           <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Stages</SelectItem>
-            {stages.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+            {stages.map(s => <SelectItem key={s.id} value={s.value}>{s.label}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>

@@ -19,14 +19,14 @@ import { ArrowLeft, Building2, CalendarDays, UserCircle2, Plus, X, TicketPlus } 
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const { projects, customers, technicians, tickets, updateProject, updateTicket, addTicket } = useStore();
+  const { projects, customers, technicians, tickets, settings, updateProject, updateTicket, addTicket } = useStore();
   const [linkDialog, setLinkDialog] = useState(false);
   const [ticketToLink, setTicketToLink] = useState<string>("");
   const [newDialog, setNewDialog] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
-    priority: "medium" as "low" | "medium" | "high" | "critical",
+    priority: "medium" as string,
     technicianId: "none",
   });
 
@@ -80,8 +80,8 @@ export default function ProjectDetail() {
           <Select value={project.status} onValueChange={v => updateProject(project.id, { status: v as typeof project.status })}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {(["planning", "active", "on_hold", "completed", "cancelled"] as const).map(s => (
-                <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>
+              {settings.projectStatuses.map(s => (
+                <SelectItem key={s.id} value={s.value}>{s.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -217,8 +217,8 @@ export default function ProjectDetail() {
                 <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v as typeof form.priority })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {(["low", "medium", "high", "critical"] as const).map(p => (
-                      <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
+                    {settings.ticketPriorities.map(p => (
+                      <SelectItem key={p.id} value={p.value}>{p.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

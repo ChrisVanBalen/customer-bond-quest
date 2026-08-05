@@ -12,11 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { differenceInMonths, format } from "date-fns";
 
-const stages: AgreementStage[] = ["draft", "quoting", "sent", "accepted", "executed", "expired", "cancelled"];
-
 export default function AgreementDetail() {
   const { id } = useParams<{ id: string }>();
-  const { agreements, customers, assets, updateAgreement } = useStore();
+  const { agreements, customers, assets, settings, updateAgreement } = useStore();
+  const stages = settings.agreementStages;
   const agreement = agreements.find(a => a.id === id);
 
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
@@ -143,7 +142,7 @@ export default function AgreementDetail() {
                   <Select value={agreement.stage} onValueChange={v => handleStageChange(v as AgreementStage)}>
                     <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {stages.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+                      {stages.map(s => <SelectItem key={s.id} value={s.value}>{s.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </dd>

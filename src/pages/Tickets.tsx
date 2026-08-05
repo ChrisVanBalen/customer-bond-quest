@@ -28,16 +28,11 @@ import { CreateFromTemplateDialog } from "@/components/CreateFromTemplateDialog"
 import { Plus, Search, Pencil, Package, MapPin, ChevronDown, Star, UserCircle2, FilePlus2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
-  { value: "open", label: "Open" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "resolved", label: "Resolved" },
-  { value: "billing", label: "Billing" },
-  { value: "closed", label: "Closed" },
-];
-
 export default function Tickets() {
-  const { tickets, customers, assets, technicians, projects, addTicket, updateTicket } = useStore();
+  const { tickets, customers, assets, technicians, projects, settings, addTicket, updateTicket } = useStore();
+  const STATUS_OPTIONS = settings.ticketStatuses;
+  const PRIORITY_OPTIONS = settings.ticketPriorities;
+  const CATEGORY_OPTIONS = settings.ticketCategories;
   const [search, setSearch] = useState("");
   const [categoryTab, setCategoryTab] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<TicketStatus[]>([]);
@@ -158,7 +153,7 @@ export default function Tickets() {
           <TabsTrigger value="all">
             All <span className="ml-1.5 text-xs text-muted-foreground">{nonBillingTickets.length}</span>
           </TabsTrigger>
-          {TICKET_CATEGORIES.map(c => (
+          {CATEGORY_OPTIONS.map(c => (
             <TabsTrigger key={c.value} value={c.value}>
               {c.label} <span className="ml-1.5 text-xs text-muted-foreground">{categoryCounts[c.value] ?? 0}</span>
             </TabsTrigger>
@@ -347,7 +342,7 @@ export default function Tickets() {
               <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v as TicketCategory }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TICKET_CATEGORIES.map(c => (
+                  {CATEGORY_OPTIONS.map(c => (
                     <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -451,10 +446,7 @@ export default function Tickets() {
                 <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as TicketPriority }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
+                    {PRIORITY_OPTIONS.map(p => <SelectItem key={p.id} value={p.value}>{p.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -463,11 +455,7 @@ export default function Tickets() {
                 <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v as TicketStatus }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="billing">Billing</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
+                    {STATUS_OPTIONS.map(s => <SelectItem key={s.id} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

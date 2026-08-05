@@ -50,8 +50,8 @@ export interface Asset {
   history: DeploymentEvent[];
 }
 
-export type TicketPriority = "low" | "medium" | "high" | "critical";
-export type TicketStatus = "open" | "in_progress" | "resolved" | "billing" | "closed";
+export type TicketPriority = "low" | "medium" | "high" | "critical" | (string & {});
+export type TicketStatus = "open" | "in_progress" | "resolved" | "billing" | "closed" | (string & {});
 
 export interface TicketLogEntry {
   id: string;
@@ -96,7 +96,7 @@ export interface Technician {
   createdAt: string;
 }
 
-export type TicketCategory = "service" | "sales" | "purchasing" | "porting" | "quoting";
+export type TicketCategory = "service" | "sales" | "purchasing" | "porting" | "quoting" | (string & {});
 
 export const TICKET_CATEGORIES: { value: TicketCategory; label: string }[] = [
   { value: "service", label: "Service" },
@@ -127,7 +127,7 @@ export interface Ticket {
   timeEntries: TimeEntry[];
 }
 
-export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled";
+export type ProjectStatus = "planning" | "active" | "on_hold" | "completed" | "cancelled" | (string & {});
 
 export interface Project {
   id: string;
@@ -143,7 +143,7 @@ export interface Project {
 }
 
 
-export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled";
+export type AgreementStage = "draft" | "quoting" | "sent" | "accepted" | "executed" | "expired" | "cancelled" | (string & {});
 
 export interface AgreementServiceLine {
   id: string;

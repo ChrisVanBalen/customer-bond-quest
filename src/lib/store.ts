@@ -1037,7 +1037,7 @@ export function useStore() {
       ...prev,
       settings: {
         ...prev.settings,
-        [group]: prev.settings[group].filter(o => o.id === id || !o.locked ? o.id !== id : true),
+        [group]: prev.settings[group].filter(o => o.id !== id || o.locked),
       },
     }));
   }, []);

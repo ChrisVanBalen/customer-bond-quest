@@ -17,8 +17,6 @@ import {
 import { Plus, Pencil, Trash2, Search, X, FilePlus2 } from "lucide-react";
 import { CreateFromTemplateDialog } from "@/components/CreateFromTemplateDialog";
 
-const priorities: TicketPriority[] = ["low", "medium", "high", "critical"];
-
 interface FormState {
   name: string;
   title: string;
@@ -30,7 +28,8 @@ interface FormState {
 const emptyForm: FormState = { name: "", title: "", description: "", priority: "medium", tasks: [] };
 
 export default function TicketTemplates() {
-  const { ticketTemplates, scheduledTickets, addTicketTemplate, updateTicketTemplate, deleteTicketTemplate } = useStore();
+  const { ticketTemplates, scheduledTickets, addTicketTemplate, updateTicketTemplate, deleteTicketTemplate, settings } = useStore();
+  const priorities = settings.ticketPriorities;
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TicketTemplate | null>(null);
@@ -160,7 +159,7 @@ export default function TicketTemplates() {
                 <Select value={form.priority} onValueChange={(v: TicketPriority) => setForm({ ...form, priority: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {priorities.map(p => <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>)}
+                    {priorities.map(p => <SelectItem key={p.id} value={p.value}>{p.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

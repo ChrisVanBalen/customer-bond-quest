@@ -16,12 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Search, Pencil, Trash2, FolderKanban } from "lucide-react";
 
-const STATUSES: ProjectStatus[] = ["planning", "active", "on_hold", "completed", "cancelled"];
 
-const statusLabel = (s: ProjectStatus) => s.replace("_", " ");
 
 export default function Projects() {
-  const { projects, customers, technicians, tickets, addProject, updateProject, deleteProject } = useStore();
+  const { projects, customers, technicians, tickets, settings, addProject, updateProject, deleteProject } = useStore();
+  const STATUSES = settings.projectStatuses;
+  const statusLabel = (v: ProjectStatus) => STATUSES.find(s => s.value === v)?.label ?? String(v).replace("_", " ");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
@@ -162,7 +162,7 @@ export default function Projects() {
                 <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v as ProjectStatus }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{statusLabel(s)}</SelectItem>)}
+                    {STATUSES.map(s => <SelectItem key={s.id} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

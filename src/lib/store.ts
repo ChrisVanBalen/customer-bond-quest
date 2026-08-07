@@ -6,6 +6,8 @@ export interface CustomerLocation {
   name: string;
   address: string;
   isPrimary: boolean;
+  lat?: number;
+  lng?: number;
 }
 
 export interface Customer {

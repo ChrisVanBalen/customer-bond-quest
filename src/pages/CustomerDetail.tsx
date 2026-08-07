@@ -40,7 +40,7 @@ export default function CustomerDetail() {
 
   const [locationDialog, setLocationDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState<CustomerLocation | null>(null);
-  const [locForm, setLocForm] = useState({ name: "", address: "", isPrimary: false });
+  const [locForm, setLocForm] = useState<{ name: string; address: string; isPrimary: boolean; lat?: number; lng?: number }>({ name: "", address: "", isPrimary: false });
 
   if (!customer) {
     return (

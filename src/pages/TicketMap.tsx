@@ -93,6 +93,19 @@ export default function TicketMap() {
     [customers]
   );
 
+  /** Coordinates saved on the site record via Google Address lookup, when present. */
+  const savedCoordsFor = useMemo(
+    () => (customerId: string, locationId: string | null): LatLng | null => {
+      const customer = customers.find(c => c.id === customerId);
+      if (!customer) return null;
+      const loc = locationId ? customer.locations.find(l => l.id === locationId) : null;
+      const primary = customer.locations.find(l => l.isPrimary) ?? customer.locations[0];
+      const target = loc ?? primary;
+      return target?.lat != null && target?.lng != null ? { lat: target.lat, lng: target.lng } : null;
+    },
+    [customers]
+  );
+
   const visibleTickets = useMemo(
     () => tickets.filter(t => selected.includes(t.status)),
     [tickets, selected]

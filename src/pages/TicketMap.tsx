@@ -319,7 +319,7 @@ export default function TicketMap() {
           )}
           {unlocatable.length > 0 && (
             <p className="text-xs text-muted-foreground mt-3">
-              {unlocatable.length} address{unlocatable.length === 1 ? "" : "es"} could not be located.
+              {unlocatable.length} address{unlocatable.length === 1 ? "" : "es"} could not be located. Re-save the site address on the customer using the Google address lookup to pin it exactly.
             </p>
           )}
         </div>

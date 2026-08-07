@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Filter, MapPin, Loader2 } from "lucide-react";
+import { loadGoogleMaps } from "@/lib/googleMaps";
 
 const MARKER_COLORS: Record<OptionColor, string> = {
   gray: "#71717a",

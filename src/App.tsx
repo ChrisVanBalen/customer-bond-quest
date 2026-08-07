@@ -11,6 +11,7 @@ import Assets from "./pages/Assets";
 import Tickets from "./pages/Tickets";
 import TicketTemplates from "./pages/TicketTemplates";
 import ScheduledTickets from "./pages/ScheduledTickets";
+import TicketMap from "./pages/TicketMap";
 
 import AssetDetail from "./pages/AssetDetail";
 import CustomerDetail from "./pages/CustomerDetail";

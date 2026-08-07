@@ -160,7 +160,7 @@ export default function TicketMap() {
     return visibleTickets.flatMap(t => {
       const address = addressFor(t.customerId, t.locationId);
       if (!address) return [];
-      const position = coords[address];
+      const position = savedCoordsFor(t.customerId, t.locationId) ?? coords[address];
       if (!position) return [];
       return [{
         ticketId: t.id,
@@ -172,7 +172,7 @@ export default function TicketMap() {
         color: colorFor(t.status),
       }];
     });
-  }, [visibleTickets, coords, customers, addressFor, statusOptions]);
+  }, [visibleTickets, coords, customers, addressFor, savedCoordsFor, statusOptions]);
 
   // Render markers
   useEffect(() => {

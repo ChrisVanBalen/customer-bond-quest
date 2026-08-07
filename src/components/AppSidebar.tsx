@@ -24,6 +24,7 @@ const navItems = [
 ];
 
 const ticketSubItems = [
+  { title: "Ticket Map", url: "/tickets/map", icon: Map },
   { title: "Templates", url: "/tickets/templates", icon: LayoutTemplate },
   { title: "Scheduled Tickets", url: "/tickets/scheduled", icon: CalendarClock },
 ];

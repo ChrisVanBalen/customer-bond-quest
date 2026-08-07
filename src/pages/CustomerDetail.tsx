@@ -406,7 +406,14 @@ export default function CustomerDetail() {
             </div>
             <div className="grid gap-1.5">
               <Label>Address</Label>
-              <Input value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} placeholder="Full address" />
+              <AddressAutocomplete
+                value={locForm.address}
+                onChange={(address, coords) =>
+                  setLocForm(f => ({ ...f, address, lat: coords?.lat, lng: coords?.lng }))
+                }
+                placeholder="Full address"
+              />
+              <p className="text-xs text-muted-foreground">Powered by Google Address lookup</p>
             </div>
             <div className="flex items-center justify-between">
               <Label>Primary Location</Label>

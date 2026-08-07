@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore, Customer } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -159,7 +160,10 @@ export default function Customers() {
             </div>
             <div className="grid gap-1.5">
               <Label>Address</Label>
-              <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+              <AddressAutocomplete
+                value={form.address}
+                onChange={address => setForm(f => ({ ...f, address }))}
+              />
             </div>
             <div className="grid gap-1.5">
               <Label>Notes</Label>

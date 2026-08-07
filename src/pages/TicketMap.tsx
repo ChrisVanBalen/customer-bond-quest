@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Filter, MapPin, Loader2 } from "lucide-react";
+import { loadGoogleMaps } from "@/lib/googleMaps";
 
 const MARKER_COLORS: Record<OptionColor, string> = {
   gray: "#71717a",
@@ -38,29 +39,7 @@ function writeGeoCache(cache: Record<string, LatLng>) {
   localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(cache));
 }
 
-/** Loads the Google Maps JS API once and resolves when ready. */
-let mapsPromise: Promise<void> | null = null;
-function loadMaps(): Promise<void> {
-  if (mapsPromise) return mapsPromise;
-  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-  mapsPromise = new Promise<void>((resolve, reject) => {
-    if (!key) {
-      reject(new Error("Google Maps is not configured."));
-      return;
-    }
-    if ((window as any).google?.maps) {
-      resolve();
-      return;
-    }
-    (window as any).__initTicketMap = () => resolve();
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initTicketMap`;
-    script.async = true;
-    script.onerror = () => reject(new Error("Failed to load Google Maps."));
-    document.head.appendChild(script);
-  });
-  return mapsPromise;
-}
+const loadMaps = loadGoogleMaps;
 
 function pinSvg(color: string) {
   return (
@@ -110,6 +89,19 @@ export default function TicketMap() {
       const loc = locationId ? customer.locations.find(l => l.id === locationId) : null;
       const primary = customer.locations.find(l => l.isPrimary) ?? customer.locations[0];
       return loc?.address ?? primary?.address ?? customer.address ?? null;
+    },
+    [customers]
+  );
+
+  /** Coordinates saved on the site record via Google Address lookup, when present. */
+  const savedCoordsFor = useMemo(
+    () => (customerId: string, locationId: string | null): LatLng | null => {
+      const customer = customers.find(c => c.id === customerId);
+      if (!customer) return null;
+      const loc = locationId ? customer.locations.find(l => l.id === locationId) : null;
+      const primary = customer.locations.find(l => l.isPrimary) ?? customer.locations[0];
+      const target = loc ?? primary;
+      return target?.lat != null && target?.lng != null ? { lat: target.lat, lng: target.lng } : null;
     },
     [customers]
   );
@@ -168,7 +160,7 @@ export default function TicketMap() {
     return visibleTickets.flatMap(t => {
       const address = addressFor(t.customerId, t.locationId);
       if (!address) return [];
-      const position = coords[address];
+      const position = savedCoordsFor(t.customerId, t.locationId) ?? coords[address];
       if (!position) return [];
       return [{
         ticketId: t.id,
@@ -180,7 +172,7 @@ export default function TicketMap() {
         color: colorFor(t.status),
       }];
     });
-  }, [visibleTickets, coords, customers, addressFor, statusOptions]);
+  }, [visibleTickets, coords, customers, addressFor, savedCoordsFor, statusOptions]);
 
   // Render markers
   useEffect(() => {
@@ -327,7 +319,7 @@ export default function TicketMap() {
           )}
           {unlocatable.length > 0 && (
             <p className="text-xs text-muted-foreground mt-3">
-              {unlocatable.length} address{unlocatable.length === 1 ? "" : "es"} could not be located.
+              {unlocatable.length} address{unlocatable.length === 1 ? "" : "es"} could not be located. Re-save the site address on the customer using the Google address lookup to pin it exactly.
             </p>
           )}
         </div>

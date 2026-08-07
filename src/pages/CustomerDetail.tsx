@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useStore, CustomerLocation } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { AssetLifeBar } from "@/components/AssetLifeBar";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { getAssetLife, stageMeta } from "@/lib/assetLife";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export default function CustomerDetail() {
 
   const [locationDialog, setLocationDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState<CustomerLocation | null>(null);
-  const [locForm, setLocForm] = useState({ name: "", address: "", isPrimary: false });
+  const [locForm, setLocForm] = useState<{ name: string; address: string; isPrimary: boolean; lat?: number; lng?: number }>({ name: "", address: "", isPrimary: false });
 
   if (!customer) {
     return (
@@ -73,7 +74,7 @@ export default function CustomerDetail() {
 
   const openEditLocation = (loc: CustomerLocation) => {
     setEditingLocation(loc);
-    setLocForm({ name: loc.name, address: loc.address, isPrimary: loc.isPrimary });
+    setLocForm({ name: loc.name, address: loc.address, isPrimary: loc.isPrimary, lat: loc.lat, lng: loc.lng });
     setLocationDialog(true);
   };
 
@@ -406,7 +407,14 @@ export default function CustomerDetail() {
             </div>
             <div className="grid gap-1.5">
               <Label>Address</Label>
-              <Input value={locForm.address} onChange={e => setLocForm(f => ({ ...f, address: e.target.value }))} placeholder="Full address" />
+              <AddressAutocomplete
+                value={locForm.address}
+                onChange={(address, coords) =>
+                  setLocForm(f => ({ ...f, address, lat: coords?.lat, lng: coords?.lng }))
+                }
+                placeholder="Full address"
+              />
+              <p className="text-xs text-muted-foreground">Powered by Google Address lookup</p>
             </div>
             <div className="flex items-center justify-between">
               <Label>Primary Location</Label>

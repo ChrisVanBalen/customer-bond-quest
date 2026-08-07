@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useStore, CustomerLocation } from "@/lib/store";
 import { PageHeader } from "@/components/PageHeader";
 import { AssetLifeBar } from "@/components/AssetLifeBar";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { getAssetLife, stageMeta } from "@/lib/assetLife";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";

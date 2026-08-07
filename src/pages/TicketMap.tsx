@@ -38,29 +38,7 @@ function writeGeoCache(cache: Record<string, LatLng>) {
   localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(cache));
 }
 
-/** Loads the Google Maps JS API once and resolves when ready. */
-let mapsPromise: Promise<void> | null = null;
-function loadMaps(): Promise<void> {
-  if (mapsPromise) return mapsPromise;
-  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-  mapsPromise = new Promise<void>((resolve, reject) => {
-    if (!key) {
-      reject(new Error("Google Maps is not configured."));
-      return;
-    }
-    if ((window as any).google?.maps) {
-      resolve();
-      return;
-    }
-    (window as any).__initTicketMap = () => resolve();
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=__initTicketMap`;
-    script.async = true;
-    script.onerror = () => reject(new Error("Failed to load Google Maps."));
-    document.head.appendChild(script);
-  });
-  return mapsPromise;
-}
+const loadMaps = loadGoogleMaps;
 
 function pinSvg(color: string) {
   return (

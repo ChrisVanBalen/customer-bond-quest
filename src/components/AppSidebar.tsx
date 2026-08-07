@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Package, TicketCheck, FileSignature, Wrench, FolderKanban, ChevronRight, LayoutTemplate, CalendarClock, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Package, TicketCheck, FileSignature, Wrench, FolderKanban, ChevronRight, LayoutTemplate, CalendarClock, Settings, Map as MapIcon } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -24,6 +24,7 @@ const navItems = [
 ];
 
 const ticketSubItems = [
+  { title: "Ticket Map", url: "/tickets/map", icon: MapIcon },
   { title: "Templates", url: "/tickets/templates", icon: LayoutTemplate },
   { title: "Scheduled Tickets", url: "/tickets/scheduled", icon: CalendarClock },
 ];

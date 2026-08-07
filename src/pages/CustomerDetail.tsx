@@ -74,7 +74,7 @@ export default function CustomerDetail() {
 
   const openEditLocation = (loc: CustomerLocation) => {
     setEditingLocation(loc);
-    setLocForm({ name: loc.name, address: loc.address, isPrimary: loc.isPrimary });
+    setLocForm({ name: loc.name, address: loc.address, isPrimary: loc.isPrimary, lat: loc.lat, lng: loc.lng });
     setLocationDialog(true);
   };
 

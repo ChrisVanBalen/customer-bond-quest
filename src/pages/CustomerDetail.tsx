@@ -187,42 +187,22 @@ export default function CustomerDetail() {
               <div className="p-4 border-b">
                 <h2 className="text-sm font-semibold text-foreground">Locations Map</h2>
               </div>
-              <div className="aspect-video bg-muted relative">
-                <iframe
-                  title="Customer locations"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-90,180,90&layer=mapnik`}
-                  className="absolute inset-0"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-muted/60 backdrop-blur-sm">
-                  <div className="text-center p-4 space-y-2">
-                    <MapPin className="h-8 w-8 text-primary mx-auto" />
-                    <div className="space-y-1">
-                      {locations.map(loc => (
-                        <div key={loc.id} className="text-xs text-foreground">
-                          <span className="font-medium">{loc.name}:</span>{" "}
-                          <span className="text-muted-foreground">{loc.address}</span>
-                        </div>
-                      ))}
+              <div>
+                <LocationsMap places={locations} className="h-64 w-full" />
+                <div className="p-3 space-y-1 border-t">
+                  {locations.map(loc => (
+                    <div key={loc.id} className="text-xs">
+                      <span className="font-medium text-foreground">{loc.name}:</span>{" "}
+                      <a
+                        href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(loc.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary hover:underline"
+                      >
+                        {loc.address}
+                      </a>
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-center pt-1">
-                      {locations.map(loc => (
-                        <a
-                          key={loc.id}
-                          href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(loc.address)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[10px] text-primary hover:underline"
-                        >
-                          {loc.name} →
-                        </a>
-                      ))}
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>

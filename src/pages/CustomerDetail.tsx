@@ -88,8 +88,6 @@ export default function CustomerDetail() {
     setLocationDialog(false);
   };
 
-  // Build Google Maps URL with all locations for the static map display
-  const allAddresses = locations.map(l => encodeURIComponent(l.address));
 
   return (
     <div className="animate-fade-in">
@@ -215,7 +213,7 @@ export default function CustomerDetail() {
                       {locations.map(loc => (
                         <a
                           key={loc.id}
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.address)}`}
+                          href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(loc.address)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[10px] text-primary hover:underline"
@@ -414,7 +412,7 @@ export default function CustomerDetail() {
                 }
                 placeholder="Full address"
               />
-              <p className="text-xs text-muted-foreground">Powered by Google Address lookup</p>
+              <p className="text-xs text-muted-foreground">Powered by OpenStreetMap address lookup</p>
             </div>
             <div className="flex items-center justify-between">
               <Label>Primary Location</Label>

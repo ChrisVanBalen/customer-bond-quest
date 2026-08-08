@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { loadGoogleMaps, type LatLng } from "@/lib/googleMaps";
+import { searchAddresses, type AddressSuggestion, type LatLng } from "@/lib/osm";
 import { Loader2, MapPin } from "lucide-react";
-
-interface Suggestion {
-  text: string;
-  placeId: string;
-}
 
 interface Props {
   value: string;
@@ -15,19 +10,13 @@ interface Props {
   id?: string;
 }
 
-/** Address input backed by the Google Places API (New) autocomplete suggestions. */
+/** Address input backed by OpenStreetMap (Nominatim) search suggestions. */
 export function AddressAutocomplete({ value, onChange, placeholder = "Start typing an address...", id }: Props) {
-  const [ready, setReady] = useState(false);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const sessionToken = useRef<any>(null);
   const debounce = useRef<number | null>(null);
   const wrapper = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    loadGoogleMaps().then(() => setReady(true)).catch(() => setReady(false));
-  }, []);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -39,51 +28,23 @@ export function AddressAutocomplete({ value, onChange, placeholder = "Start typi
 
   const fetchSuggestions = (input: string) => {
     if (debounce.current) window.clearTimeout(debounce.current);
-    if (!ready || input.trim().length < 3) {
+    if (input.trim().length < 3) {
       setSuggestions([]);
       return;
     }
     debounce.current = window.setTimeout(async () => {
-      try {
-        setLoading(true);
-        const { AutocompleteSuggestion, AutocompleteSessionToken } =
-          (await (window as any).google.maps.importLibrary("places")) as any;
-        if (!sessionToken.current) sessionToken.current = new AutocompleteSessionToken();
-        const { suggestions: results } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
-          input,
-          sessionToken: sessionToken.current,
-        });
-        setSuggestions(
-          (results ?? [])
-            .filter((r: any) => r.placePrediction)
-            .map((r: any) => ({
-              text: r.placePrediction.text?.toString() ?? "",
-              placeId: r.placePrediction.placeId,
-            }))
-        );
-        setOpen(true);
-      } catch {
-        setSuggestions([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 250);
+      setLoading(true);
+      const results = await searchAddresses(input);
+      setSuggestions(results);
+      setOpen(true);
+      setLoading(false);
+    }, 400);
   };
 
-  const select = async (s: Suggestion) => {
+  const select = (s: AddressSuggestion) => {
     setOpen(false);
     setSuggestions([]);
-    try {
-      const { Place } = (await (window as any).google.maps.importLibrary("places")) as any;
-      const place = new Place({ id: s.placeId });
-      await place.fetchFields({ fields: ["formattedAddress", "location"] });
-      const address = place.formattedAddress ?? s.text;
-      const loc = place.location;
-      onChange(address, loc ? { lat: loc.lat(), lng: loc.lng() } : undefined);
-    } catch {
-      onChange(s.text);
-    }
-    sessionToken.current = null;
+    onChange(s.label, { lat: s.lat, lng: s.lng });
   };
 
   return (
@@ -105,14 +66,14 @@ export function AddressAutocomplete({ value, onChange, placeholder = "Start typi
       {open && suggestions.length > 0 && (
         <ul className="absolute z-50 mt-1 w-full rounded-lg border bg-popover shadow-lg overflow-hidden max-h-64 overflow-y-auto">
           {suggestions.map(s => (
-            <li key={s.placeId}>
+            <li key={s.id}>
               <button
                 type="button"
                 onClick={() => select(s)}
                 className="w-full text-left px-3 py-2 text-sm flex items-start gap-2 hover:bg-muted/60 transition-colors"
               >
                 <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
-                <span>{s.text}</span>
+                <span>{s.label}</span>
               </button>
             </li>
           ))}

@@ -7,7 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Filter, MapPin, Loader2 } from "lucide-react";
-import { loadGoogleMaps } from "@/lib/googleMaps";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { geocodeAddress, type LatLng } from "@/lib/osm";
 
 const MARKER_COLORS: Record<OptionColor, string> = {
   gray: "#71717a",
@@ -25,8 +27,6 @@ const MARKER_COLORS: Record<OptionColor, string> = {
 
 const GEO_CACHE_KEY = "commandhub-geocache";
 
-type LatLng = { lat: number; lng: number };
-
 function readGeoCache(): Record<string, LatLng> {
   try {
     return JSON.parse(localStorage.getItem(GEO_CACHE_KEY) ?? "{}");
@@ -39,16 +39,17 @@ function writeGeoCache(cache: Record<string, LatLng>) {
   localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(cache));
 }
 
-const loadMaps = loadGoogleMaps;
-
-function pinSvg(color: string) {
-  return (
-    "data:image/svg+xml;charset=UTF-8," +
-    encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42"><path d="M16 1C8.8 1 3 6.8 3 14c0 9.5 13 27 13 27s13-17.5 13-27c0-7.2-5.8-13-13-13z" fill="${color}" stroke="#ffffff" stroke-width="2"/><circle cx="16" cy="14" r="5" fill="#ffffff"/></svg>`
-    )
-  );
+function pinIcon(color: string) {
+  return L.divIcon({
+    className: "",
+    html: `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="39" viewBox="0 0 32 42"><path d="M16 1C8.8 1 3 6.8 3 14c0 9.5 13 27 13 27s13-17.5 13-27c0-7.2-5.8-13-13-13z" fill="${color}" stroke="#ffffff" stroke-width="2"/><circle cx="16" cy="14" r="5" fill="#ffffff"/></svg>`,
+    iconSize: [30, 39],
+    iconAnchor: [15, 39],
+    popupAnchor: [0, -34],
+  });
 }
+
+const escapeHtml = (s: string) => s.replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c] as string));
 
 interface Plotted {
   ticketId: string;
@@ -64,16 +65,13 @@ export default function TicketMap() {
   const { tickets, customers, settings } = useStore();
   const navigate = useNavigate();
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapObj = useRef<any>(null);
-  const markers = useRef<any[]>([]);
-  const infoWindow = useRef<any>(null);
+  const mapObj = useRef<L.Map | null>(null);
+  const markerLayer = useRef<L.LayerGroup | null>(null);
 
   const statusOptions = settings.ticketStatuses;
   const [selected, setSelected] = useState<string[]>(
     statusOptions.filter(s => s.value !== "closed" && s.value !== "billing").map(s => s.value)
   );
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [geocoding, setGeocoding] = useState(false);
   const [coords, setCoords] = useState<Record<string, LatLng>>(() => readGeoCache());
   const [unlocatable, setUnlocatable] = useState<string[]>([]);
@@ -93,7 +91,7 @@ export default function TicketMap() {
     [customers]
   );
 
-  /** Coordinates saved on the site record via Google Address lookup, when present. */
+  /** Coordinates saved on the site record via address lookup, when present. */
   const savedCoordsFor = useMemo(
     () => (customerId: string, locationId: string | null): LatLng | null => {
       const customer = customers.find(c => c.id === customerId);
@@ -111,14 +109,8 @@ export default function TicketMap() {
     [tickets, selected]
   );
 
-  // Load the map script
+  // Geocode any addresses we haven't resolved yet (Nominatim, rate-limited to 1/sec)
   useEffect(() => {
-    loadMaps().then(() => setReady(true)).catch(e => setError(e.message));
-  }, []);
-
-  // Geocode any addresses we haven't resolved yet
-  useEffect(() => {
-    if (!ready) return;
     const needed = Array.from(
       new Set(
         tickets
@@ -131,18 +123,14 @@ export default function TicketMap() {
     let cancelled = false;
     setGeocoding(true);
     (async () => {
-      const geocoder = new (window as any).google.maps.Geocoder();
       const found: Record<string, LatLng> = {};
       const failed: string[] = [];
       for (const address of needed) {
-        try {
-          const res = await geocoder.geocode({ address });
-          const loc = res.results?.[0]?.geometry?.location;
-          if (loc) found[address] = { lat: loc.lat(), lng: loc.lng() };
-          else failed.push(address);
-        } catch {
-          failed.push(address);
-        }
+        if (cancelled) return;
+        const loc = await geocodeAddress(address);
+        if (loc) found[address] = loc;
+        else failed.push(address);
+        await new Promise(r => setTimeout(r, 1100));
       }
       if (cancelled) return;
       const merged = { ...readGeoCache(), ...found };
@@ -154,7 +142,7 @@ export default function TicketMap() {
     return () => {
       cancelled = true;
     };
-  }, [ready, tickets, addressFor, coords, unlocatable]);
+  }, [tickets, addressFor, coords, unlocatable]);
 
   const plotted: Plotted[] = useMemo(() => {
     return visibleTickets.flatMap(t => {
@@ -174,51 +162,51 @@ export default function TicketMap() {
     });
   }, [visibleTickets, coords, customers, addressFor, savedCoordsFor, statusOptions]);
 
+  // Init map
+  useEffect(() => {
+    if (!mapRef.current || mapObj.current) return;
+    const map = L.map(mapRef.current, { center: [39.5, -98.35], zoom: 4, scrollWheelZoom: true });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+    markerLayer.current = L.layerGroup().addTo(map);
+    mapObj.current = map;
+    return () => {
+      map.remove();
+      mapObj.current = null;
+      markerLayer.current = null;
+    };
+  }, []);
+
   // Render markers
   useEffect(() => {
-    if (!ready || !mapRef.current) return;
-    const g = (window as any).google;
-    if (!mapObj.current) {
-      mapObj.current = new g.maps.Map(mapRef.current, {
-        center: { lat: 39.5, lng: -98.35 },
-        zoom: 4,
-        mapTypeControl: false,
-        streetViewControl: false,
-      });
-      infoWindow.current = new g.maps.InfoWindow();
-    }
-    markers.current.forEach(m => m.setMap(null));
-    markers.current = [];
+    const map = mapObj.current;
+    const layer = markerLayer.current;
+    if (!map || !layer) return;
+    layer.clearLayers();
 
-    const bounds = new g.maps.LatLngBounds();
     plotted.forEach(p => {
-      const marker = new g.maps.Marker({
-        position: p.position,
-        map: mapObj.current,
-        title: p.title,
-        icon: { url: pinSvg(p.color), scaledSize: new g.maps.Size(30, 39) },
-      });
-      marker.addListener("click", () => {
-        infoWindow.current.setContent(
+      L.marker([p.position.lat, p.position.lng], { icon: pinIcon(p.color), title: p.title })
+        .bindPopup(
           `<div style="font-family:inherit;font-size:13px;max-width:220px">
-             <strong>${p.title.replace(/</g, "&lt;")}</strong><br/>
-             ${p.customerName.replace(/</g, "&lt;")}<br/>
-             <span style="color:#666">${p.address.replace(/</g, "&lt;")}</span>
+             <strong>${escapeHtml(p.title)}</strong><br/>
+             ${escapeHtml(p.customerName)}<br/>
+             <span style="color:#666">${escapeHtml(p.address)}</span>
            </div>`
-        );
-        infoWindow.current.open(mapObj.current, marker);
-      });
-      markers.current.push(marker);
-      bounds.extend(p.position);
+        )
+        .addTo(layer);
     });
 
     if (plotted.length === 1) {
-      mapObj.current.setCenter(plotted[0].position);
-      mapObj.current.setZoom(13);
+      map.setView([plotted[0].position.lat, plotted[0].position.lng], 13);
     } else if (plotted.length > 1) {
-      mapObj.current.fitBounds(bounds, 64);
+      map.fitBounds(L.latLngBounds(plotted.map(p => [p.position.lat, p.position.lng] as [number, number])), {
+        padding: [48, 48],
+      });
     }
-  }, [ready, plotted]);
+    map.invalidateSize();
+  }, [plotted]);
 
   const toggle = (value: string) =>
     setSelected(prev => (prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]));
@@ -278,14 +266,7 @@ export default function TicketMap() {
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
-          {error ? (
-            <div className="h-[560px] flex flex-col items-center justify-center gap-2 text-muted-foreground">
-              <MapPin className="h-8 w-8" />
-              <p className="text-sm">{error}</p>
-            </div>
-          ) : (
-            <div ref={mapRef} className="h-[560px] w-full" />
-          )}
+          <div ref={mapRef} className="h-[560px] w-full z-0" />
         </div>
 
         <div className="bg-card rounded-xl border shadow-sm p-4 max-h-[560px] overflow-auto">
@@ -319,9 +300,12 @@ export default function TicketMap() {
           )}
           {unlocatable.length > 0 && (
             <p className="text-xs text-muted-foreground mt-3">
-              {unlocatable.length} address{unlocatable.length === 1 ? "" : "es"} could not be located. Re-save the site address on the customer using the Google address lookup to pin it exactly.
+              {unlocatable.length} address{unlocatable.length === 1 ? "" : "es"} could not be located. Re-save the site address on the customer using the address lookup to pin it exactly.
             </p>
           )}
+          <p className="text-[10px] text-muted-foreground mt-3">
+            Map data © OpenStreetMap contributors
+          </p>
         </div>
       </div>
     </div>
